@@ -1,0 +1,37 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build Mesh
+        run: |
+          cd mesh
+          make
+      - name: Build Initializer
+        run: |
+          cd initializer
+          make
+      - name: Build Emisor
+        run: |
+          cd emisor
+          make
+      - name: Build Receptor
+        run: |
+          cd receptor
+          make
+      - name: Build Finalizer
+        run: |
+          cd finalizer
+          make
+
