@@ -11,5 +11,5 @@ compile_static:
 	${AR} rcs libmesh.a *.o
 
 clean:
-	${RM} *.o
+	${RM} *.o *.a
 
