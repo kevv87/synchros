@@ -2,13 +2,19 @@ $CC = gcc
 $RM = rm -rf
 $AR = ar
 
-all: helloworld compile_static
+all: mesh compile_static
+LINKER_FLAGS += -lrt
+COMPILER_FLAGS += -Werror
 
-helloworld: helloworld.c
-	${CC} -c helloworld.c -I./include
+mesh: mesh.c
+	${CC} ${COMPILER_FLAGS} -o mesh.o -c mesh.c -I./include ${LINKER_FLAGS}
+
+test: test/test.c mesh compile_static
+	${CC} ${COMPILER_FLAGS} -o test.o test/test.c -I./include -L./ -lmesh ${LINKER_FLAGS}
+	./test.o
 
 compile_static:
-	${AR} rcs libmesh.a *.o
+	${AR} rcs libmesh.a mesh.o
 
 clean:
 	${RM} *.o *.a
