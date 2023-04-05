@@ -5,13 +5,18 @@ $AR = ar
 all: mesh compile_static
 LINKER_FLAGS += -lrt
 COMPILER_FLAGS += -Werror
+MESH_LIB = -I./include -L./ -lmesh
+
+FOR_TESTS += test/test_common.c ${MESH_LIB} ${LINKER_FLAGS}
 
 mesh: mesh.c
 	${CC} ${COMPILER_FLAGS} -o mesh.o -c mesh.c -I./include ${LINKER_FLAGS}
 
-test: test/test.c mesh compile_static
-	${CC} ${COMPILER_FLAGS} -o test.o test/test.c -I./include -L./ -lmesh ${LINKER_FLAGS}
-	./test.o
+test_writer: test/test_writer.c
+	${CC} ${COMPILER_FLAGS} -o test_writer.o test/test_writer.c ${FOR_TESTS}
+	./test_writer.o
+
+test: mesh compile_static test_writer
 
 compile_static:
 	${AR} rcs libmesh.a mesh.o
