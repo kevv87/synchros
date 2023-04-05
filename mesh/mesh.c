@@ -34,6 +34,11 @@ void *get_ptr_to_shared_memory(int shm_fd, size_t bytes_to_map) {
      return shm_ptr;
 }
 
+void *initialize_shared_memory(char *shared_memory, size_t size) {
+    int shm_fd = open_shared_memory(shared_memory);
+    gize_size_to_shmem(shm_fd, size);
+    return get_ptr_to_shared_memory(shm_fd, size);
+}
 
 int close_shared_memory(char* shared_memory_name) {
     return shm_unlink(shared_memory_name);
