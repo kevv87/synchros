@@ -9,7 +9,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include "mesh.h"
+#include "shmem_handler.h"
 
 void test_should_read_wrote_structures() {
     printf("### test_should_read_wrote_structures\n");

@@ -1,30 +1,28 @@
 $CC = gcc
-$RM = rm -rf
+$RM = rm
 $AR = ar
+$PWD = $(shell pwd)
 
 all: mesh compile_static
 LINKER_FLAGS += -lrt
-COMPILER_FLAGS += -Werror
-MESH_LIB = -I./include -L./ -lmesh
+COMPILER_FLAGS += -Werror -I${PWD}/include
+MESH_LIB = -I${PWD}/include -L${PWD}/ -lmesh
 
-FOR_TESTS += ../common/test/test_common.c -I../common/test ${MESH_LIB} ${LINKER_FLAGS}
+FOR_TESTS += ${PWD}/../common/test/test_common.c -I${PWD}/../common/test ${MESH_LIB} ${LINKER_FLAGS}
+
+MESH_SOURCES = mesh.c
 
 mesh: mesh.c
-	${CC} ${COMPILER_FLAGS} -o mesh.o -c mesh.c -I./include ${LINKER_FLAGS}
+	${CC} ${COMPILER_FLAGS} -o mesh.o -c ${MESH_SOURCES} ${LINKER_FLAGS}
 
-test_writer: test/test_writer.c
-	${CC} ${COMPILER_FLAGS} -o test_writer.o test/test_writer.c ${FOR_TESTS}
-	./test_writer.o
+test_shmem_handler: 
+	make -C ./test/shmem_handler/
 
-test_reader: test/test_reader.c
-	${CC} ${COMPILER_FLAGS} -o test_reader.o test/test_reader.c ${FOR_TESTS}
-	./test_reader.o
-
-test: mesh compile_static test_writer test_reader
+test: mesh compile_static test_shmem_handler
 
 compile_static:
 	${AR} rcs libmesh.a mesh.o
 
 clean:
-	${RM} *.o *.a
+	rm -rf *.o *.a
 
