@@ -1,17 +1,18 @@
-CC = gcc
-INCLUDE_FLAGS = -I../mesh/include
-RM = rm -rf
-PWD = $(shell pwd)
-MESH_LIB = -L../mesh -lmesh
+CC=gcc
+CFLAGS=-Wall 
 
-all: common main
+.PHONY: all
 
-common:
-	${MAKE} -C ../mesh
-	ls ../mesh
+all: receptor run
 
-main: main.c
-	${CC} ${INCLUDE_FLAGS} ${MESH_LIB} -o main.o main.c
+receptor: receptor.o
+	$(CC) $(CFLAGS) receptor.o -o receptor
 
-clean: 
-	${RM} *.o
+receptor.o: receptor.c
+	$(CC) $(CFLAGS) -c receptor.c
+
+run: receptor
+	./receptor
+
+clean:
+	rm -f receptor receptor.o
