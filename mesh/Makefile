@@ -7,7 +7,7 @@ LINKER_FLAGS += -lrt
 COMPILER_FLAGS += -Werror
 MESH_LIB = -I./include -L./ -lmesh
 
-FOR_TESTS += test/test_common.c ${MESH_LIB} ${LINKER_FLAGS}
+FOR_TESTS += ../common/test/test_common.c -I../common/test ${MESH_LIB} ${LINKER_FLAGS}
 
 mesh: mesh.c
 	${CC} ${COMPILER_FLAGS} -o mesh.o -c mesh.c -I./include ${LINKER_FLAGS}
