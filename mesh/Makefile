@@ -16,7 +16,11 @@ test_writer: test/test_writer.c
 	${CC} ${COMPILER_FLAGS} -o test_writer.o test/test_writer.c ${FOR_TESTS}
 	./test_writer.o
 
-test: mesh compile_static test_writer
+test_reader: test/test_reader.c
+	${CC} ${COMPILER_FLAGS} -o test_reader.o test/test_reader.c ${FOR_TESTS}
+	./test_reader.o
+
+test: mesh compile_static test_writer test_reader
 
 compile_static:
 	${AR} rcs libmesh.a mesh.o

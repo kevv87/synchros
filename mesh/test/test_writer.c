@@ -11,8 +11,6 @@
 
 #include "mesh.h"
 
-#define TEST_SHM_NAME "/test_mem"
-
 void test_shmget_should_return_fd() {
     printf("### test_shmget_should_return_0\n");
     int shm_fd = open_shared_memory(TEST_SHM_NAME);
@@ -75,7 +73,7 @@ void test_should_write_various_structures_in_sh_mem() {
     struct st2 st2 = {3, 4, 5};
     struct st3 st3 = {'b'};
 
-    size_t sizes = sizeof(st1) + sizeof(st2) + sizeof(st3);
+    size_t sizes = sizeof(struct st1) + sizeof(struct st2) + sizeof(struct st3);
 
     give_size_to_shmem(shm_fd, sizes);
     void *shm_ptr = get_ptr_to_shared_memory(shm_fd, sizes);
@@ -85,7 +83,6 @@ void test_should_write_various_structures_in_sh_mem() {
     memcpy(shm_ptr + sizeof(st1) + sizeof(st2), &st3, sizeof(st3));
 
     munmap(shm_ptr, sizes);
-    close_shared_memory(TEST_SHM_NAME);
 }
 
 void teardown() {
@@ -94,13 +91,13 @@ void teardown() {
 }
 
 int main() {
-    printf("### Running tests!\n\n");
+    printf("### Running writer tests!\n\n");
 
     call_test_teardown(&test_shmget_should_return_fd, &teardown);
     call_test_teardown(&test_shmem_should_close, &teardown);
     call_test_teardown(&test_should_give_a_size_to_shmem, &teardown);
     call_test_teardown(&test_should_retrieve_ptr_from_shmem, &teardown);
-    call_test_teardown(&test_should_write_various_structures_in_sh_mem, &teardown);
+    call_test(&test_should_write_various_structures_in_sh_mem);
 
     printf("\n### All tests were succesfull!\n");
     return 0;
