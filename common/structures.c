@@ -1,3 +1,6 @@
+#ifndef COMMON_STRUCTURES
+#define COMMON_STRUCTURES
+
 #include <time.h>
 #include <semaphore.h>
 
@@ -42,3 +45,10 @@ struct auditory_info {
     struct receptor_info receptor_info;
     struct shm_mem_used shm_mem_used;
 };
+
+struct shm_context {
+    int size_of_buffer;
+    int size_of_input_file;
+};
+
+#endif
