@@ -14,10 +14,26 @@ struct mesh_semaphores {
     sem_t buffer_idx_sem;
 };
 
+struct shm_context *get_shm_context(void *shm_ptr) {
+    return (struct shm_context *) shm_ptr;
+}
+
 void *initialize_shared_memory(char *shared_memory, size_t size) {
     int shm_fd = open_shared_memory(shared_memory);
     give_size_to_shmem(shm_fd, size);
     return get_ptr_to_shared_memory(shm_fd, size);
+}
+
+void *mesh_get_shm_ptr() {
+    int initial_shm_size = sizeof(struct shm_context) + sizeof(struct mesh_semaphores);
+    void *shm_ptr = initialize_shared_memory(SHM_NAME, initial_shm_size);
+
+    struct shm_context *context = get_shm_context(shm_ptr);
+    int real_shm_size = 
+        sizeof(struct shm_context) + sizeof(struct mesh_semaphores) +
+        sizeof(struct shm_caracter) * context->size_of_buffer;
+    shm_ptr = initialize_shared_memory(SHM_NAME, real_shm_size);
+    return shm_ptr;
 }
 
 int close_shared_memory(char *shared_memory_name, void* shm_ptr, size_t size) {
@@ -75,12 +91,6 @@ void *mesh_initialize(int buffer_size) {
     return shm_ptr;
 }
 
-struct shm_context get_shm_context(void *shm_ptr) {
-    struct shm_context context = {};
-    memcpy(&context, shm_ptr, sizeof(struct shm_context));
-    return context;
-}
-
 struct shm_caracter *get_buffer(void *shm_ptr){
     struct shm_caracter *buffer = 
         (struct shm_caracter *) (
@@ -110,10 +120,33 @@ sem_t *mesh_get_buffer_idx_semaphore(void *shm_ptr) {
     return &(semaphores->buffer_idx_sem);
 }
 
-//int void mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {
-//    struct shm_caracter *buffer = get_buffer(shm_ptr);
+int get_buffer_idx(void *shm_ptr) {
+    struct shm_context *context = get_shm_context(shm_ptr);
+    sem_t *buffer_idx_sem = mesh_get_buffer_idx_semaphore(shm_ptr);
+    sem_wait(buffer_idx_sem);
 
-//}
+    int buffer_idx = context->buffer_counter;
+    context->buffer_counter = (context->buffer_counter + 1) % context->size_of_buffer;
+
+    sem_post(buffer_idx_sem);
+    return buffer_idx;
+}
+
+int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {
+    struct shm_caracter *buffer = get_buffer(shm_ptr);
+    sem_t *emitter_sem = mesh_get_emitter_semaphore(shm_ptr);
+    sem_t *receptor_sem = mesh_get_receptor_semaphore(shm_ptr);
+
+    sem_wait(emitter_sem);
+
+    int buffer_idx = get_buffer_idx(shm_ptr);
+    caracter.buffer_idx = buffer_idx;
+    buffer[buffer_idx] = caracter;
+
+    sem_post(receptor_sem);
+
+    return 0;
+}
 
 void mesh_finalize(void *shm_ptr) {
     close_shared_memory(SHM_NAME, shm_ptr, shm_size);

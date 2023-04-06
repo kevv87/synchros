@@ -10,8 +10,8 @@
 void *initialize_shared_memory(char* shared_memory_name, size_t size);
 
 void *mesh_initialize();
-
-struct shm_context get_shm_context();
+struct shm_context *get_shm_context();
+void *mesh_get_shm_ptr();
 struct shm_caracter *get_buffer(void *shm_ptr);
 sem_t *mesh_get_emitter_semaphore(void *shm_ptr);
 sem_t *mesh_get_receptor_semaphore(void *shm_ptr);

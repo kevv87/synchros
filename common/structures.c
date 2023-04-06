@@ -4,6 +4,12 @@
 #include <time.h>
 #include <semaphore.h>
 
+struct shm_context {
+    int size_of_buffer;
+    int size_of_input_file;
+    int buffer_counter;
+};
+
 struct shm_caracter {
     char value;
     struct tm datetime; // from time.h
@@ -46,9 +52,5 @@ struct auditory_info {
     struct shm_mem_used shm_mem_used;
 };
 
-struct shm_context {
-    int size_of_buffer;
-    int size_of_input_file;
-};
 
 #endif
