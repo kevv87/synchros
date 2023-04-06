@@ -1,6 +1,7 @@
 #ifndef TEST_COMMON_H
 #define TEST_COMMON_H
 
+#define TEST_BUFFER_SIZE 10
 #define TEST_SHM_NAME "/test_mem"
 
 void assertm(
