@@ -1,3 +1,6 @@
+#include "mesh.h"
+#include "mesh_emitter.h"
+
 #define SHM_NAME "/shared_mem"
 
 #include <string.h>

@@ -5,8 +5,6 @@
 #include "common/structures.c"
 #include <semaphore.h>
 
-
-
 void *initialize_shared_memory(char* shared_memory_name, size_t size);
 
 void *mesh_initialize();
@@ -21,6 +19,6 @@ int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter);
 
 void mesh_finalize(void *shm_ptr);
 
-int close_shared_memory(char* shared_memory_name);
+int close_shared_memory(char* shared_memory_name, void *shm_ptr, size_t size);
 
 #endif
