@@ -1,4 +1,17 @@
 #include "test_common.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
+void assertm(int condition, char *message, ...) {
+    if (!condition) {
+        va_list args;
+        va_start(args, message);
+        vprintf(message, args);
+        va_end(args);
+        exit(1);
+    }
+}
 
 void call_test_setup_teardown(
     void (*test_function)(), void (*setup)(),

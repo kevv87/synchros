@@ -1,10 +1,11 @@
 #ifndef TEST_COMMON_H
 #define TEST_COMMON_H
 
-#include <assert.h>
-#define assertm(exp, msg) assert(((void)msg, exp))
-
 #define TEST_SHM_NAME "/test_mem"
+
+void assertm(
+    int condition, char *message, ...
+);
 
 void call_test_setup_teardown(
     void (*test_function)(), void (*setup)(),
