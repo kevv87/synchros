@@ -19,7 +19,7 @@ mesh: mesh.c
 test_shmem_handler: 
 	make -C ./test/shmem_handler/
 
-test_buffer: mesh compile_static test/test_buffer.c
+test_buffer: clean mesh compile_static test/test_buffer.c
 	${CC} ${COMPILER_FLAGS} -o test_buffer.o test/test_buffer.c ${FOR_TESTS}
 	./test_buffer.o
 	rm -rf *.o

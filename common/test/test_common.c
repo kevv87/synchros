@@ -13,6 +13,19 @@ void assertm(int condition, char *message, ...) {
     }
 }
 
+void expect_equal(int expected, int actual, char *message, ...) {
+    if (expected != actual) {
+        va_list args;
+        va_start(args, message);
+        vprintf(message, args);
+        va_end(args);
+        printf("Expected: %d, Actual: %d\n" , expected, actual);
+        exit(1);
+    } else {
+        printf("Ok.\n");
+    }
+}
+
 void call_test_setup_teardown(
     void (*test_function)(), void (*setup)(),
     void (*teardown)()

@@ -7,6 +7,8 @@ void assertm(
     int condition, char *message, ...
 );
 
+void expect_equal(int expected, int actual, char *message, ...);
+
 void call_test_setup_teardown(
     void (*test_function)(), void (*setup)(),
     void (*teardown)()
