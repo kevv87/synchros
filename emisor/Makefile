@@ -14,7 +14,7 @@ main: common main.c
 	${CC} ${INCLUDE_FLAGS} ${MESH_LIB} -o main.o main.c
 
 test_emitter:
-	${MAKE} -C ./test INCLUDE_FLAGS='${INCLUDE_FLAGS}' MESH_LIB=${MESH_LIB}
+	${MAKE} -C ./test INCLUDE_FLAGS='${INCLUDE_FLAGS}' MESH_LIB='${MESH_LIB}'
 
 clean: 
 	${RM} *.o
