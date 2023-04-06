@@ -38,11 +38,19 @@ void test_initialize_should_create_emitter_semaphore() {
 }
 
 void test_initialize_should_create_receptor_semaphore() {
-
+    printf("### test_initialize_should_create_receptor_semaphore\n");
+    sem_t *receptor_sem = mesh_get_receptor_semaphore(shm_ptr);
+    int sem_value;
+    expect_equal(sem_getvalue(receptor_sem, &sem_value), 0, "Error getting semaphore value\n");
+    expect_equal(0, sem_value, "Semaphore value is not expected\n");
 }
 
 void test_initialize_should_create_buffer_idx_semaphore() {
-
+    printf("### test_initialize_should_create_buffer_idx_semaphore\n");
+    sem_t *buffer_idx_sem = mesh_get_buffer_idx_semaphore(shm_ptr);
+    int sem_value;
+    expect_equal(sem_getvalue(buffer_idx_sem, &sem_value), 0, "Error getting semaphore value\n");
+    expect_equal(1, sem_value, "Semaphore value is not expected\n");
 }
 
 void test_should_add_new_caracter_to_buffer() {
@@ -71,9 +79,11 @@ int main() {
     printf("### Running buffer tests!\n\n");    
     first_setup();
 
-    //call_test(&test_initialize_should_save_buffer_size_in_shmem);
-    //call_test(&test_initialize_should_write_buffer_in_shmem);
+    call_test(&test_initialize_should_save_buffer_size_in_shmem);
+    call_test(&test_initialize_should_write_buffer_in_shmem);
     call_test(&test_initialize_should_create_emitter_semaphore);
+    call_test(&test_initialize_should_create_receptor_semaphore);
+    call_test(&test_initialize_should_create_buffer_idx_semaphore);
 
     last_teardown();
     printf("\n### All tests were succesfull!\n");

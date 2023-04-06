@@ -35,7 +35,7 @@ void initialize_buffer(void *shm_ptr, int buffer_size) {
     }
 
     memcpy(
-        shm_ptr + sizeof(struct shm_context),
+        shm_ptr + sizeof(struct shm_context) + sizeof(struct mesh_semaphores),
         buffer,
         sizeof(struct shm_caracter *) * buffer_size);
 }
@@ -98,6 +98,16 @@ struct mesh_semaphores *mesh_get_all_semaphores(void *shm_ptr) {
 sem_t *mesh_get_emitter_semaphore(void *shm_ptr) {
     struct mesh_semaphores *semaphores = mesh_get_all_semaphores(shm_ptr);
     return &(semaphores->emitter_sem);
+}
+
+sem_t *mesh_get_receptor_semaphore(void *shm_ptr) {
+    struct mesh_semaphores *semaphores = mesh_get_all_semaphores(shm_ptr);
+    return &(semaphores->receptor_sem);
+}
+
+sem_t *mesh_get_buffer_idx_semaphore(void *shm_ptr) {
+    struct mesh_semaphores *semaphores = mesh_get_all_semaphores(shm_ptr);
+    return &(semaphores->buffer_idx_sem);
 }
 
 //int void mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {
