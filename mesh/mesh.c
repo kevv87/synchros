@@ -5,6 +5,7 @@
 #define SHM_NAME "/shared_mem"
 
 #include <string.h>
+#include <stdio.h>
 #include <semaphore.h>
 
 #include "shmem_handler.h"
@@ -37,6 +38,24 @@ void *mesh_get_shm_ptr() {
         sizeof(struct shm_context) + sizeof(struct mesh_semaphores) +
         sizeof(struct shm_caracter) * context->size_of_buffer;
     shm_ptr = initialize_shared_memory(SHM_NAME, real_shm_size);
+    return shm_ptr;
+}
+
+void *mesh_register_emitter() {
+    void *shm_ptr = mesh_get_shm_ptr();
+    struct shm_context *context = get_shm_context(shm_ptr);
+    if (context->heartbeat == 0) {
+        printf("Error! Heartbeat is 0, mesh was not initialized!\n");
+        int *errcode = malloc(sizeof(int));
+        *errcode = -1;
+        shm_ptr = errcode;
+    }
+
+    return shm_ptr;
+}
+
+void *mesh_register_receptor() {
+    void *shm_ptr = mesh_get_shm_ptr();
     return shm_ptr;
 }
 
@@ -85,10 +104,17 @@ void initialize_semaphores(void *shm_ptr, int buffer_size) {
         sizeof(struct mesh_semaphores));
 }
 
+void initialize_heartbeat(void *shm_ptr) {
+    struct shm_context *context = get_shm_context(shm_ptr);
+    context->heartbeat = 1;
+}
+
 void *mesh_initialize(int buffer_size) {
     void *shm_ptr = initialize_shared_memory(SHM_NAME, shm_size);
     int input_file_size = 3; //TODO: get input file size
+
     initialize_context(shm_ptr, buffer_size, input_file_size);
+    initialize_heartbeat(shm_ptr);
     initialize_semaphores(shm_ptr, buffer_size);
     initialize_buffer(shm_ptr, buffer_size);
 

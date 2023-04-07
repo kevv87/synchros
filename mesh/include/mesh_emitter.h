@@ -4,7 +4,7 @@
 #include "common/structures.c"
 #include <semaphore.h>
 
-void *mesh_get_shm_ptr();
+void *mesh_register_emitter();
 int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter);
 void mesh_finalize(void *shm_ptr);
 

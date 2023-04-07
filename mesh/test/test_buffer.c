@@ -11,6 +11,12 @@
 void * shm_ptr;
 int buffer_size;
 
+void test_initialize_should_start_heartbeat() {
+    printf("### test_initialize_should_start_heartbeat\n");
+    struct shm_context *context = get_shm_context(shm_ptr);
+    assertm(context->heartbeat == 1, "Heartbeat is not started!");
+}
+
 void test_initialize_should_save_buffer_size_in_shmem() {
     printf("### test_initialize_should_save_buffer_size_in_shmem\n");
 
@@ -165,6 +171,7 @@ int main() {
     printf("### Running buffer tests!\n\n");    
     first_setup();
 
+    call_test(&test_initialize_should_start_heartbeat);
     call_test(&test_initialize_should_save_buffer_size_in_shmem);
     call_test(&test_initialize_should_write_buffer_in_shmem);
     call_test(&test_initialize_should_create_emitter_semaphore);
