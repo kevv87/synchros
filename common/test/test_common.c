@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#define PROJECT_ID 42
+
 void assertm(int condition, char *message, ...) {
     if (!condition) {
         va_list args;

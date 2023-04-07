@@ -3,6 +3,7 @@
 
 #define TEST_BUFFER_SIZE 10
 #define TEST_FILE_LENGTH 20
+#define PROJECT_ID 42
 #define TEST_SHM_NAME "/test_mem"
 
 void assertm(

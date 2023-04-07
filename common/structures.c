@@ -4,6 +4,8 @@
 #include <time.h>
 #include <semaphore.h>
 
+#define PROJECT_ID 42
+
 struct shm_context {
     int size_of_buffer;
     int size_of_input_file;
