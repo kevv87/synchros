@@ -13,8 +13,6 @@
 
 void test_should_read_wrote_structures() {
     printf("### test_should_read_wrote_structures\n");
-    int shm_fd = open_shared_memory(TEST_SHM_NAME);
-
     struct st1 {
         int value1;
         char value2;
@@ -33,12 +31,13 @@ void test_should_read_wrote_structures() {
 
     size_t sizes = sizeof(struct st1) + sizeof(struct st2) + sizeof(struct st3);
 
+    int shm_id = open_shared_memory(PROJECT_ID, sizes);
+
     struct st1 *st1 = malloc(sizeof(struct st1));
     struct st2 *st2;
     struct st3 *st3;
 
-    give_size_to_shmem(shm_fd, sizes);
-    void *shm_ptr = get_ptr_to_shared_memory(shm_fd, sizes);
+    void *shm_ptr = get_ptr_to_shared_memory(shm_id, sizes);
 
     st1 = shm_ptr;
     st2 = shm_ptr + sizeof(struct st1);
@@ -54,7 +53,7 @@ void test_should_read_wrote_structures() {
     
     assertm(st3->value1 == 'b',   "Memory read 2 was not expected");
 
-    munmap(shm_ptr, sizes);
+    shmem_close_shared_memory(shm_id);
 }
 
 int main() {

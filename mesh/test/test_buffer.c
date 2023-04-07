@@ -11,6 +11,12 @@
 void * shm_ptr;
 int buffer_size;
 
+void test_initialize_context_should_have_shm_id() {
+    printf("### test_initialize_context_should_have_shm_id\n");
+    struct shm_context *context = get_shm_context(shm_ptr);
+    assertm(context->shm_id > 0, "Shared memory id is not set!");
+}
+
 void test_initialize_should_start_heartbeat() {
     printf("### test_initialize_should_start_heartbeat\n");
     struct shm_context *context = get_shm_context(shm_ptr);
@@ -21,7 +27,6 @@ void test_initialize_should_save_buffer_size_in_shmem() {
     printf("### test_initialize_should_save_buffer_size_in_shmem\n");
 
     struct shm_context *context = get_shm_context(shm_ptr);
-    
     assertm(context->size_of_buffer == buffer_size, "Buffer size is not expected!");
 }
 
@@ -30,7 +35,7 @@ void test_initialize_should_write_buffer_in_shmem() {
     struct shm_caracter *buffer = get_buffer(shm_ptr);
     
     for (int i = 0; i < buffer_size; i++) {
-        assertm(buffer[i].buffer_idx == i, 
+        expect_equal(i, buffer[i].buffer_idx, 
                 "Buffer is not initialized correctly, index %d is wrong\n", i);
     }
 }
@@ -218,8 +223,10 @@ void test_reading_should_increment_emitter_semaphore() {
 }
 
 void first_setup() {
-    buffer_size = 13;
-    mesh_initialize(buffer_size);
+    buffer_size = TEST_BUFFER_SIZE;
+    shm_ptr = mesh_initialize(buffer_size);
+    unmap_shared_memory(shm_ptr);
+
     shm_ptr = mesh_get_shm_ptr();
 }
 
@@ -249,6 +256,7 @@ int main() {
     printf("### Running buffer tests!\n\n");    
     first_setup();
 
+    call_test(&test_initialize_context_should_have_shm_id);
     call_test(&test_initialize_should_start_heartbeat);
     call_test(&test_initialize_should_save_buffer_size_in_shmem);
     call_test(&test_initialize_should_write_buffer_in_shmem);

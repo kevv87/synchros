@@ -11,54 +11,29 @@
 
 #include "shmem_handler.h"
 
-void test_shmget_should_return_fd() {
+void test_shmget_should_return_id() {
     printf("### test_shmget_should_return_0\n");
-    int shm_fd = open_shared_memory(TEST_SHM_NAME);
-    assertm(shm_fd>=0, "Reserve memory found an error");
-}
+    int shm_id = open_shared_memory(PROJECT_ID, sizeof(int));
+    assertm(shm_id>=0, "Reserve memory found an error");
 
-
-void test_should_give_a_size_to_shmem() {
-    printf("### test_should_give_a_size_to_shmem\n");
-    int shm_fd = open_shared_memory(TEST_SHM_NAME);
-    
-    int errcode = give_size_to_shmem(shm_fd, sizeof(int));
-
-    assertm(errcode >=0, "Couldnt give a size to shared memory");
+    shmem_close_shared_memory(shm_id);
 }
 
 void test_should_retrieve_ptr_from_shmem() {
     printf("### test_should_retrieve_ptr_from_shmem\n");
-    int shm_fd = open_shared_memory(TEST_SHM_NAME);
     size_t size = sizeof(int);
-    give_size_to_shmem(shm_fd, size);
+    int shm_id = open_shared_memory(PROJECT_ID, size);
 
-    void *shm_ptr = get_ptr_to_shared_memory(shm_fd, size);
+    void *shm_ptr = get_ptr_to_shared_memory(shm_id, size);
 
     int err_code = *((int *) shm_ptr);
     assertm(err_code >= 0, "Error obtaining the shared memory pointer");
 
-    shmem_close_shared_memory(TEST_SHM_NAME, shm_ptr, size);
-}
-
-void test_shmem_should_close() {
-    printf("### test_shmem_should_close\n");
-    int shm_fd = open_shared_memory(TEST_SHM_NAME);
-    size_t size = sizeof(int);
-    give_size_to_shmem(shm_fd, size);
-
-    void *shm_ptr = get_ptr_to_shared_memory(shm_fd, size);
-
-    int res = shmem_close_shared_memory(TEST_SHM_NAME, shm_ptr, size);
-    assertm(res==0, "Closing shared memory found an error");
-
-    int reopening_errcode = shm_open(TEST_SHM_NAME, O_RDWR, 0666);
-    assertm(reopening_errcode<0, "Shared memory could still be openned after supposedly closing it");
+    shmem_close_shared_memory(shm_id);
 }
 
 void test_should_write_various_structures_in_sh_mem() {
     printf("### test_should_write_various_structures_in_sh_mem\n");
-    int shm_fd = open_shared_memory(TEST_SHM_NAME);
 
     struct st1 {
         int value1;
@@ -81,8 +56,8 @@ void test_should_write_various_structures_in_sh_mem() {
     struct st3 st3 = {'b'};
 
     size_t sizes = sizeof(struct st1) + sizeof(struct st2) + sizeof(struct st3);
+    int shm_fd = open_shared_memory(PROJECT_ID, sizes);
 
-    give_size_to_shmem(shm_fd, sizes);
     void *shm_ptr = get_ptr_to_shared_memory(shm_fd, sizes);
 
     memcpy(shm_ptr, &st1, sizeof(st1));
@@ -97,9 +72,7 @@ void teardown() {
 int main() {
     printf("### Running writer tests!\n\n");
 
-    call_test(&test_shmget_should_return_fd);
-    call_test(&test_shmem_should_close);
-    call_test(&test_should_give_a_size_to_shmem);
+    call_test(&test_shmget_should_return_id);
     call_test(&test_should_retrieve_ptr_from_shmem);
     call_test(&test_should_write_various_structures_in_sh_mem);
 
