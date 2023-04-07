@@ -53,6 +53,7 @@ void test_should_read_wrote_structures() {
     assertm(st2->value3 == 5,   "Memory read 2 was not expected");
     
     assertm(st3->value1 == 'b',   "Memory read 2 was not expected");
+    while(1);
 
     munmap(shm_ptr, sizes);
 }

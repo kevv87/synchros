@@ -21,7 +21,6 @@ void test_initialize_should_save_buffer_size_in_shmem() {
     printf("### test_initialize_should_save_buffer_size_in_shmem\n");
 
     struct shm_context *context = get_shm_context(shm_ptr);
-    
     assertm(context->size_of_buffer == buffer_size, "Buffer size is not expected!");
 }
 
@@ -29,8 +28,11 @@ void test_initialize_should_write_buffer_in_shmem() {
     printf("### test_should_write_buffer_in_shmem\n");
     struct shm_caracter *buffer = get_buffer(shm_ptr);
     
+    printf("Buffer address: %p\n", buffer);
     for (int i = 0; i < buffer_size; i++) {
-        assertm(buffer[i].buffer_idx == i, 
+        printf("TEST: Buffer[%d] is in %p\n", i, &buffer[i]);
+        printf("TEST: Buffer[%d].buffer_idx = %d\n", i, buffer[i].buffer_idx);
+        expect_equal(i, buffer[i].buffer_idx, 
                 "Buffer is not initialized correctly, index %d is wrong\n", i);
     }
 }
@@ -218,8 +220,11 @@ void test_reading_should_increment_emitter_semaphore() {
 }
 
 void first_setup() {
-    buffer_size = 13;
-    mesh_initialize(buffer_size);
+    buffer_size = TEST_BUFFER_SIZE;
+    shm_ptr = mesh_initialize(buffer_size);
+    while(1);
+    unmap_shared_memory(shm_ptr);
+
     shm_ptr = mesh_get_shm_ptr();
 }
 

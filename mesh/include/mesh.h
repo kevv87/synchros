@@ -6,6 +6,7 @@
 #include <semaphore.h>
 
 void *initialize_shared_memory(char* shared_memory_name, size_t size);
+void unmap_shared_memory(void *shm_ptr);
 
 void *mesh_initialize();
 struct shm_context *get_shm_context();
