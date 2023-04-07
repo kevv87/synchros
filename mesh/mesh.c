@@ -17,6 +17,7 @@ struct mesh_semaphores {
     sem_t emitter_sem;
     sem_t receptor_sem;
     sem_t buffer_idx_sem;
+    sem_t file_idx_sem;
 };
 
 struct shm_context *get_shm_context(void *shm_ptr) {
@@ -82,7 +83,10 @@ void initialize_buffer(void *shm_ptr, int buffer_size) {
 void initialize_context(void *shm_ptr, int buffer_size, int input_file_size) {
     struct shm_context context = {
         .size_of_buffer = buffer_size,
-        .size_of_input_file = input_file_size
+        .size_of_input_file = input_file_size,
+        .buffer_counter = 0,
+        .heartbeat = 0,
+        .file_idx = 0,
     };
     memcpy(shm_ptr, &context, sizeof(struct shm_context));
 }
@@ -97,6 +101,7 @@ void initialize_semaphores(void *shm_ptr, int buffer_size) {
     sem_init(&(semaphores.emitter_sem), 1, 13);
     sem_init(&(semaphores.receptor_sem), 1, 0);
     sem_init(&(semaphores.buffer_idx_sem), 1, 1);
+    sem_init(&(semaphores.file_idx_sem), 1, 1);
 
     memcpy(
         shm_ptr + sizeof(struct shm_context),
@@ -111,7 +116,7 @@ void initialize_heartbeat(void *shm_ptr) {
 
 void *mesh_initialize(int buffer_size) {
     void *shm_ptr = initialize_shared_memory(SHM_NAME, shm_size);
-    int input_file_size = 3; //TODO: get input file size
+    int input_file_size = 100; //TODO: get input file size
 
     initialize_context(shm_ptr, buffer_size, input_file_size);
     initialize_heartbeat(shm_ptr);
@@ -150,6 +155,11 @@ sem_t *mesh_get_buffer_idx_semaphore(void *shm_ptr) {
     return &(semaphores->buffer_idx_sem);
 }
 
+sem_t *mesh_get_file_idx_semaphore(void *shm_ptr) {
+    struct mesh_semaphores *semaphores = mesh_get_all_semaphores(shm_ptr);
+    return &(semaphores->file_idx_sem);
+}
+
 int get_buffer_idx(void *shm_ptr) {
     struct shm_context *context = get_shm_context(shm_ptr);
     sem_t *buffer_idx_sem = mesh_get_buffer_idx_semaphore(shm_ptr);
@@ -160,6 +170,18 @@ int get_buffer_idx(void *shm_ptr) {
 
     sem_post(buffer_idx_sem);
     return buffer_idx;
+}
+
+int mesh_get_file_idx(void *shm_ptr) {
+    struct shm_context *context = get_shm_context(shm_ptr);
+    sem_t *file_idx_sem = mesh_get_file_idx_semaphore(shm_ptr);
+
+    sem_wait(file_idx_sem);
+    int file_idx = context->file_idx;
+    context->file_idx++;
+    sem_post(file_idx_sem);
+
+    return file_idx;
 }
 
 int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {

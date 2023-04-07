@@ -9,6 +9,7 @@ struct shm_context {
     int size_of_input_file;
     int buffer_counter;
     int heartbeat;
+    int file_idx;
 };
 
 struct shm_caracter {
