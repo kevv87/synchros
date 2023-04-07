@@ -35,7 +35,7 @@ void *get_ptr_to_shared_memory(int shm_id, size_t bytes_to_map) {
     return shm_ptr;
 }
 
-int shmem_unmap(void *shm_ptr, size_t size) {
+int shm_unmap(void *shm_ptr, size_t size) {
     printf("Detaching shared memory address %p\n", shm_ptr);
     int result = shmdt(shm_ptr);
     if (result == -1) {

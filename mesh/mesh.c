@@ -27,13 +27,10 @@ struct shm_context *get_shm_context(void *shm_ptr) {
     return (struct shm_context *) shm_ptr;
 }
 
-void *initialize_shared_memory(char *shared_memory, size_t size) {
-    printf("Initializing shared memory with size of %ld\n", size);
-    int shm_fd = open_shared_memory(shared_memory);
-    give_size_to_shmem(shm_fd, size);
-    void *shm_ptr = get_ptr_to_shared_memory(shm_fd, size);
-    printf("Initialized memory looks like this:\n");
-    dump_bytes(shm_ptr, size);
+void *initialize_shared_memory(size_t size) {
+    int shm_id = open_shared_memory(PROJECT_ID, size);
+    void *shm_ptr = get_ptr_to_shared_memory(shm_id, size);
+    get_shm_context(shm_ptr)->shm_id = shm_id;
     return shm_ptr;
 }
 
@@ -45,7 +42,7 @@ void unmap_shared_memory(void *shm_ptr){
 
 void *mesh_get_shm_ptr() {
     int initial_shm_size = sizeof(struct shm_context) + sizeof(struct mesh_semaphores);
-    void *shm_ptr = initialize_shared_memory(SHM_NAME, initial_shm_size);
+    void *shm_ptr = initialize_shared_memory(initial_shm_size);
 
     struct shm_context *context = get_shm_context(shm_ptr);
     int real_shm_size = 
@@ -53,7 +50,7 @@ void *mesh_get_shm_ptr() {
         sizeof(struct shm_caracter) * context->size_of_buffer;
     shm_unmap(shm_ptr, initial_shm_size);
 
-    shm_ptr = initialize_shared_memory(SHM_NAME, real_shm_size);
+    shm_ptr = initialize_shared_memory(real_shm_size);
     return shm_ptr;
 }
 
@@ -81,8 +78,8 @@ void *mesh_register_receptor() {
     return shm_ptr;
 }
 
-int close_shared_memory(char *shared_memory_name, void* shm_ptr, size_t size) {
-    return shmem_close_shared_memory(shared_memory_name, shm_ptr, size);
+int close_shared_memory(int shm_id) {
+    return shmem_close_shared_memory(shm_id);
 }
 
 void initialize_buffer(void *shm_ptr, int buffer_size) {
@@ -91,23 +88,20 @@ void initialize_buffer(void *shm_ptr, int buffer_size) {
             shm_ptr + sizeof(struct shm_context) + sizeof(struct mesh_semaphores)
         );
 
-    printf("Initializing buffer at %p\n", buffer);
     for (int i = 0; i < buffer_size; i++) {
-        printf("Initializing buffer[%d] at %p\n", i, &buffer[i]);
         buffer[i].buffer_idx = i;
-        printf("Buffer[%d].buffer_idx = %d\n", i, buffer[i].buffer_idx);
     }
 }
 
-void initialize_context(void *shm_ptr, int buffer_size, int input_file_size) {
+void initialize_context(void *shm_ptr, int buffer_size, int input_file_size, int shm_id) {
     struct shm_context context = {
         .size_of_buffer = buffer_size,
         .size_of_input_file = input_file_size,
         .buffer_counter = 0,
         .heartbeat = 0,
         .file_idx = 0,
+        .shm_id = shm_id,
     };
-    printf("Initializing context at %p\n", shm_ptr);
     memcpy(shm_ptr, &context, sizeof(struct shm_context));
 }
 
@@ -119,14 +113,13 @@ void initialize_semaphores(void *shm_ptr, int buffer_size) {
         .read_buffer_idx_sem = {}
     };
 
-    sem_init(&(semaphores.emitter_sem), 1, 13);
+    sem_init(&(semaphores.emitter_sem), 1, buffer_size);
     sem_init(&(semaphores.receptor_sem), 1, 0);
     sem_init(&(semaphores.buffer_idx_sem), 1, 1);
     sem_init(&(semaphores.file_idx_sem), 1, 1);
     sem_init(&(semaphores.output_file_idx_sem), 1, 1);
     sem_init(&(semaphores.read_buffer_idx_sem), 1, 1);
 
-    printf("Initializing semaphores at %p\n", shm_ptr + sizeof(struct shm_context));
     memcpy(
         shm_ptr + sizeof(struct shm_context),
         &semaphores,
@@ -134,29 +127,21 @@ void initialize_semaphores(void *shm_ptr, int buffer_size) {
 }
 
 void initialize_heartbeat(void *shm_ptr) {
-    printf("Initializing heartbeat\n");
     struct shm_context *context = get_shm_context(shm_ptr);
     context->heartbeat = 1;
 }
 
 void *mesh_initialize(int buffer_size) {
-    printf("Initializing mesh with buffer size %d\n", buffer_size);
     int shm_size = sizeof(struct shm_context) + sizeof(struct mesh_semaphores) +
         sizeof(struct shm_caracter) * buffer_size;
-    void *shm_ptr = initialize_shared_memory(SHM_NAME, shm_size);
+    void *shm_ptr = initialize_shared_memory(shm_size);
+    int shm_id = get_shm_context(shm_ptr)->shm_id;
     int input_file_size = TEST_FILE_LENGTH; //TODO: get input file size
 
-    initialize_context(shm_ptr, buffer_size, input_file_size);
+    initialize_context(shm_ptr, buffer_size, input_file_size, shm_id);
     initialize_heartbeat(shm_ptr);
     initialize_semaphores(shm_ptr, buffer_size);
     initialize_buffer(shm_ptr, buffer_size);
-
-    // AQUI SE VE BIENNN
-    printf("Context is %d bytes long at %p\n", sizeof(struct shm_context), shm_ptr);
-    printf("Semaphores are %d bytes long at %p\n", sizeof(struct mesh_semaphores), shm_ptr + sizeof(struct shm_context));
-    printf("Buffer is %d bytes long at %p\n", sizeof(struct shm_caracter) * buffer_size, shm_ptr + sizeof(struct shm_context) + sizeof(struct mesh_semaphores));
-    printf("After initializing memory looks like this:\n");
-    dump_bytes(shm_ptr, shm_size);
 
     return shm_ptr;
 }
@@ -166,8 +151,6 @@ struct shm_caracter *get_buffer(void *shm_ptr){
         (struct shm_caracter *) (
             shm_ptr + sizeof(struct shm_context) + sizeof(struct mesh_semaphores)
         );
-    printf("Buffer is at %p\n, buffer");
-    dump_bytes(buffer, sizeof(struct shm_caracter) * 10);
     return buffer;
 }
 
@@ -295,8 +278,6 @@ struct shm_caracter mesh_get_caracter(void *shm_ptr) {
 }
 
 void mesh_finalize(void *shm_ptr) {
-    int buffer_size = get_shm_context(shm_ptr)->size_of_buffer;
-    int shm_size = sizeof(struct shm_context) + sizeof(struct mesh_semaphores) +
-        sizeof(struct shm_caracter) * buffer_size;
-    close_shared_memory(SHM_NAME, shm_ptr, shm_size);
+    int shm_id = get_shm_context(shm_ptr)->shm_id;
+    close_shared_memory(shm_id);
 }

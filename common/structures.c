@@ -14,6 +14,7 @@ struct shm_context {
     int file_idx;
     int output_file_idx;
     int read_buffer_counter;
+    int shm_id;
 };
 
 struct shm_caracter {
