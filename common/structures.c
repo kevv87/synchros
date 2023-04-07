@@ -10,6 +10,7 @@ struct shm_context {
     int buffer_counter;
     int heartbeat;
     int file_idx;
+    int output_file_idx;
     int read_buffer_counter;
 };
 

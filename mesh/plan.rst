@@ -31,3 +31,5 @@ El receptor hace:
            4. Hace up a semaforo de archivo de salida
            5. Retorna el indice
     2. Escribe el caracter
+
+Remember that auditory should have its own threads!
