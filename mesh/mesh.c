@@ -11,6 +11,8 @@
 #include "shmem_handler.h"
 #include "common/structures.c"
 
+#define TEST_FILE_LENGTH 20
+
 int shm_size = 10;
 
 struct mesh_semaphores {
@@ -18,6 +20,8 @@ struct mesh_semaphores {
     sem_t receptor_sem;
     sem_t buffer_idx_sem;
     sem_t file_idx_sem;
+    sem_t output_file_idx_sem;
+    sem_t read_buffer_idx_sem;
 };
 
 struct shm_context *get_shm_context(void *shm_ptr) {
@@ -51,12 +55,18 @@ void *mesh_register_emitter() {
         *errcode = -1;
         shm_ptr = errcode;
     }
-
     return shm_ptr;
 }
 
 void *mesh_register_receptor() {
     void *shm_ptr = mesh_get_shm_ptr();
+    struct shm_context *context = get_shm_context(shm_ptr);
+    if (context->heartbeat == 0) {
+        printf("Error! Heartbeat is 0, mesh was not initialized!\n");
+        int *errcode = malloc(sizeof(int));
+        *errcode = -1;
+        shm_ptr = errcode;
+    }
     return shm_ptr;
 }
 
@@ -95,13 +105,16 @@ void initialize_semaphores(void *shm_ptr, int buffer_size) {
     struct mesh_semaphores semaphores = {
         .emitter_sem = {},
         .receptor_sem = {},
-        .buffer_idx_sem = {}
+        .buffer_idx_sem = {},
+        .read_buffer_idx_sem = {}
     };
 
     sem_init(&(semaphores.emitter_sem), 1, 13);
     sem_init(&(semaphores.receptor_sem), 1, 0);
     sem_init(&(semaphores.buffer_idx_sem), 1, 1);
     sem_init(&(semaphores.file_idx_sem), 1, 1);
+    sem_init(&(semaphores.output_file_idx_sem), 1, 1);
+    sem_init(&(semaphores.read_buffer_idx_sem), 1, 1);
 
     memcpy(
         shm_ptr + sizeof(struct shm_context),
@@ -116,7 +129,7 @@ void initialize_heartbeat(void *shm_ptr) {
 
 void *mesh_initialize(int buffer_size) {
     void *shm_ptr = initialize_shared_memory(SHM_NAME, shm_size);
-    int input_file_size = 100; //TODO: get input file size
+    int input_file_size = TEST_FILE_LENGTH; //TODO: get input file size
 
     initialize_context(shm_ptr, buffer_size, input_file_size);
     initialize_heartbeat(shm_ptr);
@@ -160,6 +173,16 @@ sem_t *mesh_get_file_idx_semaphore(void *shm_ptr) {
     return &(semaphores->file_idx_sem);
 }
 
+sem_t *mesh_get_read_buffer_idx_semaphore(void *shm_ptr) {
+    struct mesh_semaphores *semaphores = mesh_get_all_semaphores(shm_ptr);
+    return &(semaphores->read_buffer_idx_sem);
+}
+
+sem_t *mesh_get_output_file_idx_semaphore(void *shm_ptr) {
+    struct mesh_semaphores *semaphores = mesh_get_all_semaphores(shm_ptr);
+    return &(semaphores->output_file_idx_sem);
+}
+
 int get_buffer_idx(void *shm_ptr) {
     struct shm_context *context = get_shm_context(shm_ptr);
     sem_t *buffer_idx_sem = mesh_get_buffer_idx_semaphore(shm_ptr);
@@ -178,7 +201,27 @@ int mesh_get_file_idx(void *shm_ptr) {
 
     sem_wait(file_idx_sem);
     int file_idx = context->file_idx;
-    context->file_idx++;
+    if (file_idx >= context->size_of_input_file) {
+        file_idx = -1;
+    } else {
+        context->file_idx++;
+    }
+    sem_post(file_idx_sem);
+
+    return file_idx;
+}
+
+int mesh_get_output_file_idx(void *shm_ptr){
+    struct shm_context *context = get_shm_context(shm_ptr);
+    sem_t *file_idx_sem = mesh_get_output_file_idx_semaphore(shm_ptr);
+
+    sem_wait(file_idx_sem);
+    int file_idx = context->output_file_idx;
+    if (file_idx >= context->size_of_input_file) {
+        file_idx = -1;
+    } else {
+        context->output_file_idx++;
+    }
     sem_post(file_idx_sem);
 
     return file_idx;
@@ -198,6 +241,33 @@ int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {
     sem_post(receptor_sem);
 
     return 0;
+}
+
+int get_read_buffer_idx(void *shm_ptr) {
+    struct shm_context *context = get_shm_context(shm_ptr);
+    sem_t *read_buffer_idx_sem = mesh_get_read_buffer_idx_semaphore(shm_ptr);
+    sem_wait(read_buffer_idx_sem);
+
+    int buffer_idx = context->read_buffer_counter;
+    context->read_buffer_counter = (context->read_buffer_counter + 1) % context->size_of_buffer;
+
+    sem_post(read_buffer_idx_sem);
+    return buffer_idx;
+}
+
+struct shm_caracter mesh_get_caracter(void *shm_ptr) {
+    struct shm_caracter *buffer = get_buffer(shm_ptr);
+    sem_t *emitter_sem = mesh_get_emitter_semaphore(shm_ptr);
+    sem_t *receptor_sem = mesh_get_receptor_semaphore(shm_ptr);
+
+    sem_wait(receptor_sem);
+
+    int buffer_idx = get_read_buffer_idx(shm_ptr);
+    struct shm_caracter caracter = buffer[buffer_idx];
+
+    sem_post(emitter_sem);
+
+    return caracter;
 }
 
 void mesh_finalize(void *shm_ptr) {

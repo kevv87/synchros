@@ -17,8 +17,9 @@ sem_t *mesh_get_buffer_idx_semaphore(void *shm_ptr);
 
 int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter);
 
-void mesh_finalize(void *shm_ptr);
+struct shm_caracter mesh_get_caracter(void *shm_ptr);
 
+void mesh_finalize(void *shm_ptr);
 int close_shared_memory(char* shared_memory_name, void *shm_ptr, size_t size);
 
 #endif

@@ -7,6 +7,5 @@
 void *mesh_register_emitter();
 int mesh_get_file_idx(void *shm_ptr);
 int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter);
-void mesh_finalize(void *shm_ptr);
 
 #endif
