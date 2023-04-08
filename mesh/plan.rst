@@ -32,4 +32,19 @@ El receptor hace:
            5. Retorna el indice
     2. Escribe el caracter
 
+Para auditoria salvamos:
+- Cantidad de caracteres transferidos
+    - Cada vez que un receptor lee un caracter hacemos up al contador
+- Cantidad de caracteres en memoria compartida
+    - Cada vez que un emisor escribe un caracter hacemos up al contador
+    - Cada vez que un receptor lee un caracter hacemos down al contador
+- Cantidad de emisores vivos y totales
+    - Cada vez que registramos un emisor hacemos up al contador de vivos y up al de totales
+    - Cada vez que un emisor termina hace down al contador de vivos
+- Cantidad de receptores vivos y totales
+    - Cada vez que registramos un receptor hacemos up al contador de vivos y up al de totales
+    - Cada vez que un receptor termina hace down al contador de vivos
+- Cantidad de memoria utilizada
+    - La inicializamos en startup
+
 Remember that auditory should have its own threads!
