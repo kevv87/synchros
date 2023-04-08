@@ -19,7 +19,9 @@ void unmap_shared_memory(void *shm_ptr);
 
 void *mesh_initialize();
 void *mesh_register_emitter();
+void mesh_finalize_emitter(void *shm_ptr);
 void *mesh_register_receptor();
+void mesh_finalize_receptor(void *shm_ptr);
 void wait_all_threads();
 struct shm_context *get_shm_context();
 struct auditory_info *get_auditory_info(void *shm_ptr);

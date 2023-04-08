@@ -81,6 +81,20 @@ void * increment_total_emitters(void *shm_ptr) {
     sem_post(&auditory_info->total_emitters_semaphore);
 }
 
+void * increment_alive_receptors(void *shm_ptr) {
+    struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
+    sem_wait(&auditory_info->alive_receptors_semaphore);
+    auditory_info->alive_receptors++;
+    sem_post(&auditory_info->alive_receptors_semaphore);
+}
+
+void * increment_total_receptors(void *shm_ptr) {
+    struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
+    sem_wait(&auditory_info->total_receptors_semaphore);
+    auditory_info->total_receptors++;
+    sem_post(&auditory_info->total_receptors_semaphore);
+}
+
 void wait_all_threads() {
     printf("Waiting for all threads to finish\n");
     thread_list_node_t* current = thread_list;
@@ -121,6 +135,10 @@ void *mesh_register_receptor() {
         *errcode = -1;
         shm_ptr = errcode;
     }
+
+    create_thread(&increment_alive_receptors, shm_ptr);
+    create_thread(&increment_total_receptors, shm_ptr);
+
     return shm_ptr;
 }
 
@@ -311,6 +329,14 @@ int mesh_get_output_file_idx(void *shm_ptr){
     return file_idx;
 }
 
+void *increment_characters_in_buffer(void *shm_ptr) {
+    struct auditory_info *auditory = get_auditory_info(shm_ptr);
+    sem_t characters_in_buffer_semaphore = auditory->characters_in_buffer_semaphore;
+    sem_wait(&characters_in_buffer_semaphore);
+    auditory->characters_in_buffer++;
+    sem_post(&characters_in_buffer_semaphore);
+}
+
 int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {
     struct shm_caracter *buffer = get_buffer(shm_ptr);
     sem_t *emitter_sem = mesh_get_emitter_semaphore(shm_ptr);
@@ -321,6 +347,7 @@ int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {
     int buffer_idx = get_buffer_idx(shm_ptr);
     caracter.buffer_idx = buffer_idx;
     buffer[buffer_idx] = caracter;
+    create_thread(&increment_characters_in_buffer, shm_ptr);
 
     sem_post(receptor_sem);
 
@@ -339,6 +366,22 @@ int get_read_buffer_idx(void *shm_ptr) {
     return buffer_idx;
 }
 
+void *decrement_characters_in_buffer(void *shm_ptr) {
+    struct auditory_info *auditory = get_auditory_info(shm_ptr);
+    sem_t characters_in_buffer_semaphore = auditory->characters_in_buffer_semaphore;
+    sem_wait(&characters_in_buffer_semaphore);
+    auditory->characters_in_buffer--;
+    sem_post(&characters_in_buffer_semaphore);
+}
+
+void *increment_transferred_characters(void *shm_ptr) {
+    struct auditory_info *auditory = get_auditory_info(shm_ptr);
+    sem_t transferred_characters_semaphore = auditory->transferred_characters_semaphore;
+    sem_wait(&transferred_characters_semaphore);
+    auditory->transferred_characters++;
+    sem_post(&transferred_characters_semaphore);
+}
+
 struct shm_caracter mesh_get_caracter(void *shm_ptr) {
     struct shm_caracter *buffer = get_buffer(shm_ptr);
     sem_t *emitter_sem = mesh_get_emitter_semaphore(shm_ptr);
@@ -348,12 +391,39 @@ struct shm_caracter mesh_get_caracter(void *shm_ptr) {
 
     int buffer_idx = get_read_buffer_idx(shm_ptr);
     struct shm_caracter caracter = buffer[buffer_idx];
+    create_thread(&decrement_characters_in_buffer, shm_ptr);
+    create_thread(&increment_transferred_characters, shm_ptr);
 
     sem_post(emitter_sem);
 
     return caracter;
 }
 
+void *decrement_alive_emitters(void *shm_ptr) {
+    struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
+    sem_t *alive_emitters_sem = &(auditory_info->alive_emitters_semaphore);
+    sem_wait(alive_emitters_sem);
+    auditory_info->alive_emitters--;
+    sem_post(alive_emitters_sem);
+}
+
+void *decrement_alive_receptors(void *shm_ptr) {
+    struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
+    sem_t *alive_receptors_sem = &(auditory_info->alive_receptors_semaphore);
+    sem_wait(alive_receptors_sem);
+    auditory_info->alive_receptors--;
+    sem_post(alive_receptors_sem);
+}
+
+void mesh_finalize_emitter(void *shm_ptr) {
+    create_thread(&decrement_alive_emitters, shm_ptr);
+    wait_all_threads();
+}
+
+void mesh_finalize_receptor(void *shm_ptr) {
+    create_thread(&decrement_alive_receptors, shm_ptr);
+    wait_all_threads();
+}
 
 void mesh_finalize(void *shm_ptr) {
     int shm_id = get_shm_context(shm_ptr)->shm_id;
