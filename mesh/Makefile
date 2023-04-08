@@ -23,7 +23,11 @@ test_buffer: mesh compile_static test/test_buffer.c
 	${CC} ${COMPILER_FLAGS} -o test/test_buffer.o test/test_buffer.c ${FOR_TESTS}
 	./test/test_buffer.o
 
-test: mesh compile_static test_shmem_handler test_buffer
+test_auditory: mesh compile_static test/test_auditory.c
+	${CC} ${COMPILER_FLAGS} -o test/test_auditory.o test/test_auditory.c ${FOR_TESTS}
+	./test/test_auditory.o
+
+test: mesh compile_static test_shmem_handler test_buffer test_auditory
 
 compile_static:
 	${AR} rcs libmesh.a *.o

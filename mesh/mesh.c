@@ -7,6 +7,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <semaphore.h>
+#include <pthread.h>
+#include <unistd.h>
 
 #include "shmem_handler.h"
 #include "common/structures.c"
@@ -14,14 +16,19 @@
 
 #define TEST_FILE_LENGTH 20
 
-struct mesh_semaphores {
-    sem_t emitter_sem;
-    sem_t receptor_sem;
-    sem_t buffer_idx_sem;
-    sem_t file_idx_sem;
-    sem_t output_file_idx_sem;
-    sem_t read_buffer_idx_sem;
-};
+typedef struct thread_list_node {
+    pthread_t *thread_id;
+    struct thread_list_node* next;
+} thread_list_node_t;
+
+thread_list_node_t *thread_list;
+
+void add_thread_to_list(pthread_t *thread) {
+    thread_list_node_t* new_node = malloc(sizeof(thread_list_node_t));
+    new_node->thread_id = thread;
+    new_node->next = thread_list;
+    thread_list = new_node;
+}
 
 struct shm_context *get_shm_context(void *shm_ptr) {
     return (struct shm_context *) shm_ptr;
@@ -54,6 +61,41 @@ void *mesh_get_shm_ptr() {
     return shm_ptr;
 }
 
+struct auditory_info *get_auditory_info(void *shm_ptr) {
+    struct auditory_info *auditory_info = 
+        shm_ptr + sizeof(struct shm_context) + sizeof(struct mesh_semaphores);
+    return auditory_info;
+}
+
+void * increment_alive_emitters(void *shm_ptr) {
+    struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
+    sem_wait(&auditory_info->alive_emitters_semaphore);
+    auditory_info->alive_emitters++;
+    sem_post(&auditory_info->alive_emitters_semaphore);
+}
+
+void * increment_total_emitters(void *shm_ptr) {
+    struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
+    sem_wait(&auditory_info->total_emitters_semaphore);
+    auditory_info->total_emitters++;
+    sem_post(&auditory_info->total_emitters_semaphore);
+}
+
+void wait_all_threads() {
+    printf("Waiting for all threads to finish\n");
+    thread_list_node_t* current = thread_list;
+    while (current != NULL) {
+        pthread_join(*current->thread_id, NULL);
+        current = current->next;
+    }
+}
+
+void create_thread(void *(*thread_function)(void *), void *shm_ptr) {
+    pthread_t *thread = malloc(sizeof(pthread_t));
+    pthread_create(thread, NULL, thread_function, shm_ptr);
+    add_thread_to_list(thread);
+}
+
 void *mesh_register_emitter() {
     void *shm_ptr = mesh_get_shm_ptr();
     struct shm_context *context = get_shm_context(shm_ptr);
@@ -63,6 +105,10 @@ void *mesh_register_emitter() {
         *errcode = -1;
         shm_ptr = errcode;
     }
+
+    create_thread(&increment_alive_emitters, shm_ptr);
+    create_thread(&increment_total_emitters, shm_ptr);
+
     return shm_ptr;
 }
 
@@ -83,12 +129,14 @@ int close_shared_memory(int shm_id) {
 }
 
 void initialize_buffer(void *shm_ptr, int buffer_size) {
+    printf("Starting to initialize buffer\n");
     struct shm_caracter *buffer =
         (struct shm_caracter *) (
-            shm_ptr + sizeof(struct shm_context) + sizeof(struct mesh_semaphores)
-        );
+            shm_ptr + sizeof(struct shm_context) + sizeof(struct mesh_semaphores) +
+            sizeof(struct auditory_info) );
 
     for (int i = 0; i < buffer_size; i++) {
+        printf("Initializing index %d\n", i);
         buffer[i].buffer_idx = i;
     }
 }
@@ -131,17 +179,46 @@ void initialize_heartbeat(void *shm_ptr) {
     context->heartbeat = 1;
 }
 
+void initialize_auditory(void *shm_ptr, int buffer_size) {
+    struct auditory_info* auditory_info = 
+        (struct auditory_info *)
+        (shm_ptr + sizeof(struct shm_context) + sizeof(struct mesh_semaphores) );
+
+    sem_init(&(auditory_info->alive_emitters_semaphore), 1, 1);
+    sem_init(&(auditory_info->total_emitters_semaphore), 1, 1);
+    sem_init(&(auditory_info->alive_receptors_semaphore), 1, 1);
+    sem_init(&(auditory_info->total_receptors_semaphore), 1, 1);
+    sem_init(&(auditory_info->transferred_characters_semaphore), 1, 1);
+    sem_init(&(auditory_info->characters_in_buffer_semaphore), 1, 1);
+
+    auditory_info->shm_mem_used = 
+        sizeof(struct shm_context) + sizeof(struct mesh_semaphores) +
+        sizeof(struct auditory_info) + sizeof(struct shm_caracter) * buffer_size;
+}
+
 void *mesh_initialize(int buffer_size) {
-    int shm_size = sizeof(struct shm_context) + sizeof(struct mesh_semaphores) +
-        sizeof(struct shm_caracter) * buffer_size;
+    printf("Starting mesh initialization\n");
+    int shm_size =
+        sizeof(struct shm_context) + sizeof(struct mesh_semaphores) +
+        sizeof(struct auditory_info) + sizeof(struct shm_caracter) * buffer_size;
     void *shm_ptr = initialize_shared_memory(shm_size);
     int shm_id = get_shm_context(shm_ptr)->shm_id;
     int input_file_size = TEST_FILE_LENGTH; //TODO: get input file size
 
     initialize_context(shm_ptr, buffer_size, input_file_size, shm_id);
+    printf("Context initialized\n");
+
+    initialize_auditory(shm_ptr, buffer_size);
+    printf("Auditory initialized\n");
+
     initialize_heartbeat(shm_ptr);
+    printf("Heartbeat initialized\n");
+
     initialize_semaphores(shm_ptr, buffer_size);
+    printf("Semaphores initialized\n");
+
     initialize_buffer(shm_ptr, buffer_size);
+    printf("Mesh initialized correctly!\n");
 
     return shm_ptr;
 }
@@ -149,8 +226,8 @@ void *mesh_initialize(int buffer_size) {
 struct shm_caracter *get_buffer(void *shm_ptr){
     struct shm_caracter *buffer = 
         (struct shm_caracter *) (
-            shm_ptr + sizeof(struct shm_context) + sizeof(struct mesh_semaphores)
-        );
+            shm_ptr + sizeof(struct shm_context) + sizeof(struct mesh_semaphores) +
+            sizeof(struct auditory_info) );
     return buffer;
 }
 
@@ -276,6 +353,7 @@ struct shm_caracter mesh_get_caracter(void *shm_ptr) {
 
     return caracter;
 }
+
 
 void mesh_finalize(void *shm_ptr) {
     int shm_id = get_shm_context(shm_ptr)->shm_id;

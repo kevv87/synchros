@@ -5,11 +5,24 @@
 #include "common/structures.c"
 #include <semaphore.h>
 
+struct mesh_semaphores {
+    sem_t emitter_sem;
+    sem_t receptor_sem;
+    sem_t buffer_idx_sem;
+    sem_t file_idx_sem;
+    sem_t output_file_idx_sem;
+    sem_t read_buffer_idx_sem;
+};
+
 void *initialize_shared_memory(size_t size);
 void unmap_shared_memory(void *shm_ptr);
 
 void *mesh_initialize();
+void *mesh_register_emitter();
+void *mesh_register_receptor();
+void wait_all_threads();
 struct shm_context *get_shm_context();
+struct auditory_info *get_auditory_info(void *shm_ptr);
 void *mesh_get_shm_ptr();
 struct shm_caracter *get_buffer(void *shm_ptr);
 sem_t *mesh_get_emitter_semaphore(void *shm_ptr);
