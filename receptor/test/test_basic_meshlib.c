@@ -18,7 +18,7 @@ void first_setup() {
 
 void test_receptor_should_register() {
     printf("### test_receptor_should_register\n");
-    void *shm_ptr = mesh_register_receptor();
+    shm_ptr = mesh_register_receptor();
 }
 
 void test_receptor_should_read_caracter_from_shm_buffer() {
@@ -47,14 +47,19 @@ void test_when_file_idx_has_reached_file_length_should_return_minus_one() {
     assertm(idx == -1, "Should return -1 when file idx has reached file length\n");
 }
 
+void test_receptor_should_finalize() {
+    printf("### test_receptor_should_finalize\n");
+    mesh_finalize_receptor(shm_ptr);
+}
+
 int main () {
     printf("\n### Running basic receptor meshlib tests!\n\n");    
-    first_setup();
 
     call_test(&test_receptor_should_register);
     call_test(&test_receptor_should_read_caracter_from_shm_buffer);
     call_test(&test_receptor_should_get_output_file_idx_counter);
     call_test(&test_when_file_idx_has_reached_file_length_should_return_minus_one);
+    call_test(&test_receptor_should_finalize);
 
     printf("\n### Finished basic receptor meshlib tests!\n\n");
     return 0;

@@ -16,5 +16,6 @@ int main() {
         mesh_add_caracter(shm_ptr, caracter);
     }
 
+    mesh_finalize_emitter(shm_ptr);
     printf("\n### Finished auxiliary emitter! Now receptors can read data!\n\n");
 }

@@ -47,4 +47,7 @@ Para auditoria salvamos:
 - Cantidad de memoria utilizada
     - La inicializamos en startup
 
-Remember that auditory should have its own threads!
+Para finalizador:
+    1. Manda heartbeat a 0
+    2. Espera a que no hayan emisores ni receptores alive
+    3. Obtiene auditoria

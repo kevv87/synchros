@@ -11,13 +11,8 @@
 void * shm_ptr;
 int buffer_size;
 
-void first_setup() {
-    buffer_size = 13;
-    shm_ptr = mesh_register_emitter();
-}
-
 void test_emitter_should_register() {
-    void *shm_ptr = mesh_register_emitter();
+    shm_ptr = mesh_register_emitter();
 }
 
 void test_emitter_should_get_file_idx_counter() {
@@ -43,14 +38,18 @@ void test_when_file_idx_has_reached_file_length_should_return_minus_one() {
     assertm(idx == -1, "Should return -1 when file idx has reached file length\n");
 }
 
+void test_emitter_should_finalize() {
+    mesh_finalize_emitter(shm_ptr);
+}
+
 int main () {
     printf("\n### Running basic emitter meshlib tests!\n\n");    
-    first_setup();
 
     call_test(&test_emitter_should_register);
     call_test(&test_emitter_should_get_file_idx_counter);
     call_test(&test_emitter_should_write_caracter_to_shm_buffer);
     call_test(&test_when_file_idx_has_reached_file_length_should_return_minus_one);
+    call_test(&test_emitter_should_finalize);
 
     printf("### Finished basic emitter meshlib tests!\n\n");
     return 0;

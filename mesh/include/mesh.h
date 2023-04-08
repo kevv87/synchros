@@ -35,7 +35,7 @@ int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter);
 
 struct shm_caracter mesh_get_caracter(void *shm_ptr);
 
-void mesh_finalize(void *shm_ptr);
+struct auditory_info mesh_finalize(void *shm_ptr);
 int close_shared_memory(int shm_id);
 
 #endif

@@ -68,6 +68,7 @@ struct auditory_info *get_auditory_info(void *shm_ptr) {
 }
 
 void * increment_alive_emitters(void *shm_ptr) {
+    printf("Registering one alive emitter\n");
     struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
     sem_wait(&auditory_info->alive_emitters_semaphore);
     auditory_info->alive_emitters++;
@@ -118,6 +119,7 @@ void *mesh_register_emitter() {
         int *errcode = malloc(sizeof(int));
         *errcode = -1;
         shm_ptr = errcode;
+        return shm_ptr;
     }
 
     create_thread(&increment_alive_emitters, shm_ptr);
@@ -425,7 +427,18 @@ void mesh_finalize_receptor(void *shm_ptr) {
     wait_all_threads();
 }
 
-void mesh_finalize(void *shm_ptr) {
-    int shm_id = get_shm_context(shm_ptr)->shm_id;
+struct auditory_info mesh_finalize(void *shm_ptr) {
+    struct shm_context *context = get_shm_context(shm_ptr);
+    struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
+
+    context->heartbeat = 0;
+    while(auditory_info->alive_emitters > 0 || auditory_info->alive_receptors > 0) {
+        printf("Someone is still alive...\n");
+        printf("Alive emitters: %d\n", auditory_info->alive_emitters);
+        printf("Alive receptors: %d\n", auditory_info->alive_receptors);
+        sleep(1);
+    }
+
+    int shm_id = context->shm_id;
     close_shared_memory(shm_id);
 }
