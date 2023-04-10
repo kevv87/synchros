@@ -47,6 +47,11 @@ void unmap_shared_memory(void *shm_ptr){
     shm_unmap(shm_ptr, size);
 }
 
+int get_heartbeat(void *shm_ptr) {
+    struct shm_context *context = get_shm_context(shm_ptr);
+    return context->heartbeat;
+}
+
 void *mesh_get_shm_ptr() {
     int initial_shm_size = sizeof(struct shm_context) + sizeof(struct mesh_semaphores);
     void *shm_ptr = initialize_shared_memory(initial_shm_size);

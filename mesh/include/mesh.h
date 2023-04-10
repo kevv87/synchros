@@ -30,6 +30,7 @@ struct shm_caracter *get_buffer(void *shm_ptr);
 sem_t *mesh_get_emitter_semaphore(void *shm_ptr);
 sem_t *mesh_get_receptor_semaphore(void *shm_ptr);
 sem_t *mesh_get_buffer_idx_semaphore(void *shm_ptr);
+int get_heartbeat(void *shm_ptr);
 
 int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter);
 
