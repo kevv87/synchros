@@ -1,6 +1,6 @@
-#include "mesh.h"
-#include "mesh_emitter.h"
-#include "mesh_initializer.h"
+#include "include/mesh.h"
+#include "include/mesh_emitter.h"
+#include "include/mesh_initializer.h"
 
 #define SHM_NAME "/shared_mem"
 
@@ -10,9 +10,9 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "shmem_handler.h"
-#include "common/structures.c"
-#include "common/debugging.c"
+#include "include/shmem_handler.h"
+#include "../common/structures.c"
+#include "../common/debugging.c"
 
 #define TEST_FILE_LENGTH 20
 

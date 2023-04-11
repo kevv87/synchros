@@ -2,7 +2,7 @@
 #define MESH_H
 
 #include <stdlib.h>
-#include "common/structures.c"
+#include "../../common/structures.c"
 #include <semaphore.h>
 
 struct mesh_semaphores {

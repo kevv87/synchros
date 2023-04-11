@@ -1,7 +1,7 @@
 #ifndef MESH_EMITTER_H
 #define MESH_EMITTER_H
 #include <stdlib.h>
-#include "common/structures.c"
+#include "../../common/structures.c"
 #include <semaphore.h>
 
 void *mesh_register_emitter();
