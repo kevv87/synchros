@@ -49,3 +49,25 @@ int mesh_get_file_idx(void *shm_ptr) {
     // Si no hay espacios vacíos, devolvemos -1
     return -1;
 }
+
+int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter, sem_t *sem) {
+    struct shm_caracter *shm_buf = (struct shm_caracter*) shm_ptr;
+    int idx = mesh_get_file_idx(shm_ptr);
+    if (idx >= 0) {
+        // Si hay espacio disponible, añadimos el caracter a la memoria compartida
+        shm_buf[idx] = caracter;
+        // Mostramos la información del caracter introducido
+        printf("%-10d%-10d%-10ld%-10c\n", caracter.index, idx, caracter.timestamp, caracter.value);
+        return idx;
+    } else {
+        // Si no hay espacio disponible, esperamos a que se libere algún espacio
+        while (sem_wait(sem) == -1) {
+            if (errno != EINTR) {
+                perror("Error esperando semáforo");
+                exit(EXIT_FAILURE);
+            }
+        }
+        // Una vez que se libera el semáforo, intentamos añadir el caracter de nuevo
+        return mesh_add_caracter(shm_ptr, caracter, sem);
+    }
+}
