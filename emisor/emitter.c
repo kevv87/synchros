@@ -36,3 +36,16 @@ void mesh_finalize_emitter(void *shm_ptr) {
         exit(EXIT_FAILURE);
     }
 }
+
+int mesh_get_file_idx(void *shm_ptr) {
+    struct shm_caracter *shm_buf = (struct shm_caracter*) shm_ptr;
+    int i;
+    for (i = 0; i < MAX_BUFFER_SIZE; i++) {
+        if (shm_buf[i].timestamp == 0) {
+            // Si encontramos un espacio vacío, devolvemos su índice
+            return i;
+        }
+    }
+    // Si no hay espacios vacíos, devolvemos -1
+    return -1;
+}
