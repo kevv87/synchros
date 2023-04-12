@@ -5,45 +5,47 @@
 #include <unistd.h>
 #include <string.h>
 #include <semaphore.h>
-#include "common/structures.c"
-#include "mesh_emitter.h"
+#include "../common/structures.c"
+#include "../mesh/include/mesh_emitter.h"
 
-#define BUFFER_SIZE 100
-
-struct shm_caracter create_caracter_emisor(int index) {
+struct shm_caracter create_caracter_emisor(int valor, int index) {
     struct shm_caracter caracter;
     time_t current_time = time(NULL);
-    // Seed the random number generator with the current time
-    srand(time(NULL));
 
-    caracter.value = rand() % (127 + 1 - 33) + 33;
+    caracter.value = valor;
+    caracter.file_idx = index;
     caracter.datetime = *localtime(&current_time);
-    caracter.buffer_idx = index;
+    //sleep(1);
     return caracter;
 }
 
-void printCharacter_emisor(struct shm_caracter character, char asciiValue) {
+void printCharacter_emisor(struct shm_caracter character, char asciiValue, char prevVal) {
     char datetime_str[50];
     strftime(datetime_str, sizeof(datetime_str), "%c", &character.datetime);
 
     printf("Caracter codificado y escrito \n");
-
     // Print table
-    printf("| %-20s | %-15c \n", "Valor del caracter", asciiValue);
+    printf("| %-20s | %-15c \n", "Valor del caracter", prevVal);
+    printf("| %-20s | %-15c \n", "Valor encriptado", asciiValue);
     printf("| %-20s | %-15d \n", "Indice de escritura", character.buffer_idx);
     printf("| %-20s | %-15s \n", "Fecha y hora", datetime_str);
 }
 
-// void print_caracter_info(struct shm_caracter caracter) {
-//     // Formatear la hora
-//     char time_buffer[20];
-//     strftime(time_buffer, 20, "%Y-%m-%d %H:%M:%S", &(caracter.datetime));
+char obtener_caracter(int index) {
+    FILE *file;
+    char c;
 
-//     // Imprimir la información en formato tabular alineado con colores
-//     printf("\033[1;32mCaracter: \033[0m%c", caracter.value);
-//     printf("\033[1;32m | Buffer index: \033[0m%d", caracter.buffer_idx);
-//     printf("\033[1;32m | Timestamp: \033[0m%s\n", time_buffer);
-// }
+    file = fopen("input.txt", "r");
+    if (file == NULL) {
+        printf("No se pudo abrir el archivo.\n");
+        return 0;
+    }
+
+    fseek(file, index, SEEK_SET);
+    c = fgetc(file);
+    fclose(file);
+    return c;
+}
 
 void emisor(int mode, char key) {
     // Register emitter and get shared memory pointer
@@ -53,33 +55,20 @@ void emisor(int mode, char key) {
         return;
     }
 
-    // Initialize variables
-    int index = 0;
-    char buffer[BUFFER_SIZE];
-    ssize_t n;
-
-    // Read input file
-    int fd = open("input.txt", O_RDONLY);
-    if (fd == -1) {
-        perror("Error opening file");
-        return;
+    int index_idx = mesh_get_file_idx(shm_ptr);
+    int heartbeat = get_heartbeat(shm_ptr);
+    while(heartbeat && index_idx != -1) {        
+        char c = obtener_caracter(index_idx);
+        char encrypted_c = c ^ key;
+        struct shm_caracter caracter = create_caracter_emisor(encrypted_c, index_idx);
+        printf("Calling add caracter\n");
+        caracter = mesh_add_caracter(shm_ptr, caracter);
+        printCharacter_emisor(caracter, encrypted_c, c);
+        printf("Called get file idx\n");
+        index_idx = mesh_get_file_idx(shm_ptr);
+        heartbeat = get_heartbeat(shm_ptr);
+        printf("%s\n", heartbeat ? "ON" : "OFF");
     }
-
-    // Read file and add characters to shared memory buffer
-    while ((n = read(fd, buffer, BUFFER_SIZE)) > 0) {
-        for (int i = 0; i < n; i++) {
-            char c = buffer[i];
-            char encrypted_c = c ^ key;
-            struct shm_caracter caracter = create_caracter_emisor(index);
-            caracter.value = encrypted_c;
-            mesh_add_caracter(shm_ptr, caracter);
-            printCharacter_emisor(caracter, encrypted_c);
-            index++;
-        }
-    }
-
-    close(fd);
-
     // Finalize emitter
     mesh_finalize_emitter(shm_ptr);
 }
