@@ -14,6 +14,7 @@ all: receptor run
 receptor: receptor.o
 	$(CC) $(COMPILE_FLAGS) $(INCLUDE_FLAGS) -o receptor.o receptor.c $(MESH_LIB)
 
+
 receptor.o: receptor.c
 	$(CC) $(CFLAGS) -c receptor.c
 
