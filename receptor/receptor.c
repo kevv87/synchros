@@ -1,4 +1,5 @@
 #include "../common/structures.c"
+#include "../mesh/include/mesh_receptor.h"
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +26,7 @@ struct shm_caracter Create_caracter(int dir){
 }
 
 int getFile(){
-    int fd = open("data.txt", O_WRONLY, 0644);
+    int fd = open("../initializer/data.txt", O_WRONLY, 0644);
      if (fd == -1) {
         perror("Error opening file");
         return 1;
@@ -96,7 +97,7 @@ void printCharacter(struct shm_caracter character, char asciiValue){
 
 
 int printText(){
-    int fd = open("data.txt", O_RDONLY);
+    int fd = open("../initializer/data.txt", O_RDONLY);
      if (fd == -1) {
         perror("Error opening file");
         return 1;
@@ -122,9 +123,40 @@ int printText(){
 
 
 void receptor(int mode,  int key){
+    char asciiValue;
+    int getValue;
+    //Attach a shared memory segment to the address space of receptor 
+    void *shm_ptr = mesh_register_receptor();
 
-    if(mode == 0){ 
-        //Add logic to make it automatic
+    if(mode == 0){
+        //Get character
+        struct shm_caracter c1 = mesh_get_caracter(shm_ptr);
+
+
+        //Add delay
+        //
+        while(get_heartbeat(shm_ptr)==1){
+            //Make XOR to decrypt
+            getValue= c1.value ^ key;
+
+            //convert value to ascii
+           asciiValue = (char) getValue;
+
+            //update file_idx of the character
+            c1.file_idx = mesh_get_output_file_idx(shm_ptr);
+
+            //open text file
+            int fd = getFile();
+            
+            //create the offset to write in the specific file_idx
+            off_t offset = c1.file_idx;
+            writeFile(fd, offset , asciiValue);
+            printCharacter(c1, asciiValue);
+            printText();
+        }
+        
+        mesh_finalize_receptor(shm_ptr);
+
     }
     else{
         while(1){//Adjust the condition. Needs to be cycled until there is a signal.
@@ -135,21 +167,31 @@ void receptor(int mode,  int key){
                     break;
                 } 
             }
-            char asciiValue;
-            int getValue;
 
-            struct shm_caracter c1= Create_caracter(2);
+            //Get character
+            struct shm_caracter c1 = mesh_get_caracter(shm_ptr);
+
             //Make XOR to decrypt
             getValue= c1.value ^ key;
+
             //convert value to ascii
-            //////printf("Pre--- value %d\n", getValue);
-            asciiValue = (char) getValue;
-            /////printf("ASCII value %c\n", asciiValue);
+           asciiValue = (char) getValue;
+
+            //update file_idx of the character
+            c1.file_idx = mesh_get_output_file_idx(shm_ptr);
+
+            //open text file
             int fd = getFile();
+            
+            //create the offset to write in the specific file_idx
             off_t offset = c1.file_idx;
             writeFile(fd, offset , asciiValue);
             printCharacter(c1, asciiValue);
             printText();
+
+            if(get_heartbeat(shm_ptr)==0){
+                mesh_finalize_receptor(shm_ptr);
+            }
         }
     }   
 

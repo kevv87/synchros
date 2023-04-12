@@ -12,7 +12,8 @@ MESH_LIB = -L${PWD}/../mesh -lmesh
 all: receptor run
 
 receptor: receptor.o
-	$(CC) $(COMPILE_FLAGS) $(MESH_LIB) receptor.o -o receptor
+	$(CC) $(COMPILE_FLAGS) $(INCLUDE_FLAGS) -o receptor.o receptor.c $(MESH_LIB)
+
 
 receptor.o: receptor.c
 	$(CC) $(CFLAGS) -c receptor.c
@@ -21,7 +22,7 @@ test_receptor:
 	${MAKE} -C ./test COMPILE_FLAGS='${COMPILE_FLAGS}' MESH_LIB='${MESH_LIB}'
 
 run: receptor
-	./receptor
+	./receptor.o
 
 clean:
 	rm -f receptor receptor.o
