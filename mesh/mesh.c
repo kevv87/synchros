@@ -14,7 +14,7 @@
 #include "../common/structures.c"
 #include "../common/debugging.c"
 
-#define TEST_FILE_LENGTH 20
+#define TEST_FILE_LENGTH 9
 
 typedef struct thread_list_node {
     pthread_t *thread_id;
@@ -310,7 +310,8 @@ int mesh_get_file_idx(void *shm_ptr) {
 
     sem_wait(file_idx_sem);
     int file_idx = context->file_idx;
-    if (file_idx >= context->size_of_input_file) {
+    if (file_idx >= (context->size_of_input_file-1)) {
+        printf("Reached end of file\n");
         file_idx = -1;
     } else {
         context->file_idx++;
@@ -344,7 +345,7 @@ void *increment_characters_in_buffer(void *shm_ptr) {
     sem_post(&characters_in_buffer_semaphore);
 }
 
-int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {
+struct shm_caracter mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {
     struct shm_caracter *buffer = get_buffer(shm_ptr);
     sem_t *emitter_sem = mesh_get_emitter_semaphore(shm_ptr);
     sem_t *receptor_sem = mesh_get_receptor_semaphore(shm_ptr);
@@ -358,7 +359,7 @@ int mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {
 
     sem_post(receptor_sem);
 
-    return 0;
+    return caracter;
 }
 
 int get_read_buffer_idx(void *shm_ptr) {
