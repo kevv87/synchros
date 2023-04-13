@@ -331,7 +331,7 @@ int mesh_get_output_file_idx(void *shm_ptr){
 
     sem_wait(file_idx_sem);
     int file_idx = context->output_file_idx;
-    if (file_idx >= context->size_of_input_file) {
+    if (file_idx >= (context->size_of_input_file-1)) {
         file_idx = -1;
     } else {
         context->output_file_idx++;
@@ -431,6 +431,16 @@ void *decrement_alive_receptors(void *shm_ptr) {
     sem_post(alive_receptors_sem);
 }
 
+void mesh_natural_death_emitter(void *shm_ptr) {
+    create_thread(&decrement_alive_emitters, shm_ptr);
+    wait_all_threads();
+}
+
+void mesh_natural_death_receptor(void *shm_ptr) {
+    create_thread(&decrement_alive_receptors, shm_ptr);
+    wait_all_threads();
+}
+
 void mesh_finalize_emitter(void *shm_ptr) {
     create_thread(&decrement_alive_emitters, shm_ptr);
     wait_all_threads();
@@ -475,6 +485,7 @@ void destroy_all_semaphores(void *shm_ptr) {
 struct auditory_info mesh_finalize(void *shm_ptr) {
     struct shm_context *context = get_shm_context(shm_ptr);
     struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
+    struct auditory_info auditory_info_copy = *auditory_info;
 
     context->heartbeat = 0;
     destroy_all_semaphores(shm_ptr);
@@ -487,4 +498,5 @@ struct auditory_info mesh_finalize(void *shm_ptr) {
 
     int shm_id = context->shm_id;
     close_shared_memory(shm_id);
+    return auditory_info_copy;
 }

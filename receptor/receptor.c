@@ -40,7 +40,7 @@ struct shm_caracter Create_caracter(int dir){
 }
 
 int getFile(){
-    int fd = open("../initializer/data.txt", O_WRONLY, 0644);
+    int fd = open("../initializer/output.txt", O_WRONLY, 0644);
      if (fd == -1) {
         perror("Error opening file");
         return 1;
@@ -109,32 +109,28 @@ void printCharacter(struct shm_caracter character, char asciiValue){
     printf("| %-20s | %-15s \n", "Fecha y hora", datetime_str);
 }
 
-
 int printText(){
-    int fd = open("../initializer/data.txt", O_RDONLY);
-     if (fd == -1) {
-        perror("Error opening file");
+    FILE *fp;
+    char c;
+
+    fp = fopen("../initializer/output.txt", "r");
+    if (fp == NULL) {
+        printf("Error: file not found");
         return 1;
     }
 
-    char buffer[100];
-    ssize_t n = read(fd, buffer, 100);
-
-    if (n == -1) {
-        printf("Failed to read from file\n");
-        return 1;
+    // Read and print each character until end of file or 0 is encountered
+    while ((c = fgetc(fp)) != EOF) {
+        if (c == 0) {
+            break;
+        }
+        printf("%c", c);
     }
-
-    printf("File contents:\n");
-    printf("%.*s", (int)n, buffer);
     printf("\n");
-    
-    // close the file descriptor when we are finished with it
-    close(fd);
 
+    fclose(fp);
     return 0;
 }
-
 
 void receptor(int mode,  int key){
     char asciiValue;
@@ -142,76 +138,55 @@ void receptor(int mode,  int key){
     //Attach a shared memory segment to the address space of receptor 
     void *shm_ptr = mesh_register_receptor();
 
-    if(mode == 0){
+    //Add delay
+    struct shm_caracter c1;
+    int file_idx = mesh_get_output_file_idx(shm_ptr);
+    while(get_heartbeat(shm_ptr) && file_idx >= 0){
+        c1 = mesh_get_caracter(shm_ptr);
         //Get character
-        struct shm_caracter c1 = mesh_get_caracter(shm_ptr);
+        //Make XOR to decrypt
+        getValue = c1.value ^ key;
 
-
-        //Add delay
-        //
-        while(get_heartbeat(shm_ptr)==1){
-            //Make XOR to decrypt
-            getValue= c1.value ^ key;
-
-            //convert value to ascii
-           asciiValue = (char) getValue;
-
-            //update file_idx of the character
-            c1.file_idx = mesh_get_output_file_idx(shm_ptr);
-
-            //open text file
-            int fd = getFile();
-            
-            //create the offset to write in the specific file_idx
-            off_t offset = c1.file_idx;
-            writeFile(fd, offset , asciiValue);
-            printCharacter(c1, asciiValue);
-            printText();
-        }
+        //open text file
+        int fd = getFile();
         
-        mesh_finalize_receptor(shm_ptr);
-
-    }
-    else{
-        while(1){//Adjust the condition. Needs to be cycled until there is a signal.
-            while(1){
-                printf("Press Enter to execute the function.\n");
-                int key= getchar();
-                if(key==10){
-                    break;
-                } 
-            }
-
-            //Get character
-            struct shm_caracter c1 = mesh_get_caracter(shm_ptr);
-
-            //Make XOR to decrypt
-            getValue= c1.value ^ key;
-
-            //convert value to ascii
-           asciiValue = (char) getValue;
-
-            //update file_idx of the character
-            c1.file_idx = mesh_get_output_file_idx(shm_ptr);
-
-            //open text file
-            int fd = getFile();
-            
-            //create the offset to write in the specific file_idx
-            off_t offset = c1.file_idx;
-            writeFile(fd, offset , asciiValue);
-            printCharacter(c1, asciiValue);
-            printText();
-
-            if(get_heartbeat(shm_ptr)==0){
-                mesh_finalize_receptor(shm_ptr);
-            }
+        //create the offset to write in the specific file_idx
+        off_t offset = c1.file_idx;
+        writeFile(fd, offset , getValue);
+        printCharacter(c1, getValue);
+        printText();
+        sleep(1);
+        file_idx = mesh_get_output_file_idx(shm_ptr);
+        c1.file_idx = file_idx;
+        while(mode == 1){
+            printf("Press Enter to continue\n");
+            int key= getchar();
+            if(key==10){
+                break;
+            } 
         }
-    }   
+    }
+
+    if(get_heartbeat(shm_ptr)==0) {
+        mesh_finalize_receptor(shm_ptr);
+    } else {
+        mesh_natural_death_receptor(shm_ptr);
+    }
 
 }
 
-int main(){
+int main(int argc, char *argv[]){
+
+    if (argc != 2) {
+        printf("Error: falta la key!\n");
+        return 1;
+    }
+
+    int key = atoi(argv[1]);
+    if (key > 255 || key < 0) {
+        printf("Error: key debe ser un entero entre 0 y 255!\n");
+        return 1;
+    }
 
     int modo_ejecucion;
     printf("+----------------------+\n");
@@ -224,7 +199,7 @@ int main(){
     modo_ejecucion = obtener_modo();
 
     chooseColor();
-    receptor(modo_ejecucion, 70);
+    receptor(modo_ejecucion, key);
 
     return 0;
 }

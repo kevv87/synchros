@@ -9,7 +9,7 @@ MESH_LIB = -L${PWD}/../mesh -lmesh
 
 .PHONY: all
 
-all: receptor run
+all: receptor
 
 receptor: receptor.o
 	$(CC) $(COMPILE_FLAGS) $(INCLUDE_FLAGS) -o receptor.o receptor.c $(MESH_LIB)
