@@ -126,11 +126,13 @@ void emisor(int mode, char key) {
 
     int index_idx = mesh_get_file_idx(shm_ptr);
     int heartbeat = get_heartbeat(shm_ptr);
+    int keyw=0;
+    getchar();
     while(heartbeat && index_idx != -1) {        
         while(mode == 1){
             printf("Press Enter to continue.\n");
-            int key= getchar();
-            if(key==10){
+            keyw= getchar();
+            if(keyw==10){
                 break;
             } 
         }

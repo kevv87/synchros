@@ -141,11 +141,13 @@ void receptor(int mode,  int key){
     //Add delay
     struct shm_caracter c1;
     int file_idx = mesh_get_output_file_idx(shm_ptr);
+    int keyw=0;
+    getchar();
     while(get_heartbeat(shm_ptr) && file_idx >= 0){
         while(mode == 1){
             printf("Press Enter to continue\n");
-            int key= getchar();
-            if(key==10){
+            keyw= getchar();
+            if(keyw==10){
                 break;
             } 
         }

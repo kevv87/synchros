@@ -55,6 +55,7 @@ int finalizer() {
 
 int main()
 {
+  printf("Waiting for signal to finish\n");
   wiringPiSetupGpio(); // initialize wiringPi
   pinMode(BUTTON_PIN, INPUT); // set button pin as input
   while (1) {
