@@ -221,14 +221,14 @@ void initialize_auditory(void *shm_ptr, int buffer_size) {
         sizeof(struct auditory_info) + sizeof(struct shm_caracter) * buffer_size;
 }
 
-void *mesh_initialize(int buffer_size) {
+void *mesh_initialize(int buffer_size, int file_length) {
     printf("Starting mesh initialization\n");
     int shm_size =
         sizeof(struct shm_context) + sizeof(struct mesh_semaphores) +
         sizeof(struct auditory_info) + sizeof(struct shm_caracter) * buffer_size;
     void *shm_ptr = initialize_shared_memory(shm_size);
     int shm_id = get_shm_context(shm_ptr)->shm_id;
-    int input_file_size = TEST_FILE_LENGTH; //TODO: get input file size
+    int input_file_size = file_length;
 
     initialize_context(shm_ptr, buffer_size, input_file_size, shm_id);
     printf("Context initialized\n");
