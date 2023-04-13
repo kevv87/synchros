@@ -127,13 +127,6 @@ void emisor(int mode, char key) {
     int index_idx = mesh_get_file_idx(shm_ptr);
     int heartbeat = get_heartbeat(shm_ptr);
     while(heartbeat && index_idx != -1) {        
-        char c = obtener_caracter(index_idx);
-        char encrypted_c = c ^ key;
-        struct shm_caracter caracter = create_caracter_emisor(encrypted_c, index_idx);
-        caracter = mesh_add_caracter(shm_ptr, caracter);
-        print_caracter_emisor(caracter, encrypted_c, c);
-        index_idx = mesh_get_file_idx(shm_ptr);
-        heartbeat = get_heartbeat(shm_ptr);
         while(mode == 1){
             printf("Press Enter to continue.\n");
             int key= getchar();
@@ -141,6 +134,13 @@ void emisor(int mode, char key) {
                 break;
             } 
         }
+        char c = obtener_caracter(index_idx);
+        char encrypted_c = c ^ key;
+        struct shm_caracter caracter = create_caracter_emisor(encrypted_c, index_idx);
+        caracter = mesh_add_caracter(shm_ptr, caracter);
+        print_caracter_emisor(caracter, encrypted_c, c);
+        index_idx = mesh_get_file_idx(shm_ptr);
+        heartbeat = get_heartbeat(shm_ptr);
     }
 
     if(get_heartbeat(shm_ptr)==0) {

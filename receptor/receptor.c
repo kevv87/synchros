@@ -142,6 +142,13 @@ void receptor(int mode,  int key){
     struct shm_caracter c1;
     int file_idx = mesh_get_output_file_idx(shm_ptr);
     while(get_heartbeat(shm_ptr) && file_idx >= 0){
+        while(mode == 1){
+            printf("Press Enter to continue\n");
+            int key= getchar();
+            if(key==10){
+                break;
+            } 
+        }
         c1 = mesh_get_caracter(shm_ptr);
         //Get character
         //Make XOR to decrypt
@@ -158,13 +165,6 @@ void receptor(int mode,  int key){
         sleep(1);
         file_idx = mesh_get_output_file_idx(shm_ptr);
         c1.file_idx = file_idx;
-        while(mode == 1){
-            printf("Press Enter to continue\n");
-            int key= getchar();
-            if(key==10){
-                break;
-            } 
-        }
     }
 
     if(get_heartbeat(shm_ptr)==0) {
