@@ -6,7 +6,7 @@
 int main() {
     printf("\n### Running auxiliary initializer process!\n");
     
-    mesh_initialize(TEST_BUFFER_SIZE);
+    mesh_initialize(TEST_BUFFER_SIZE, 20);
 
     printf("### Succesfully initialized shared memory, you can run tests now!\n\n");
     return 0;
