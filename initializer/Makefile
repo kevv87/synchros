@@ -3,7 +3,7 @@ RM = rm -rf
 PWD = $(shell pwd)
 
 MESH_LIB = -L../mesh -lmesh
-LINKER_FLAGS += -lrt $(MESH_LIB)
+LINKER_FLAGS += -lrt $(MESH_LIB) -lpthread
 COMPILER_FLAGS += -Werror -I../mesh/include -I../
 
 all: common initializer

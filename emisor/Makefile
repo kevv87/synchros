@@ -5,7 +5,7 @@ PWD = $(shell pwd)
 
 INCLUDE_FLAGS = -I${PWD}/../ -I${PWD}/../mesh/include
 COMPILE_FLAGS = -Werror ${INCLUDE_FLAGS}
-MESH_LIB = -L${PWD}/../mesh -lmesh
+MESH_LIB = -L${PWD}/../mesh -lmesh -lpthread
 
 .PHONY: all
 
