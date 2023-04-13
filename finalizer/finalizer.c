@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include "../common/wiringPi.h"
+#include <wiringPi.h>
 #include <stdio.h>
 
 #define BUTTON_PIN 17
@@ -48,34 +48,23 @@ void printInfo(struct auditory_info *info){
 }
 
 int finalizer() {
-  int flag = 0;
-  
-  while(flag==0){
-    printf("Waiting to stop.\n");
-    int key= getchar();
-    if(key==10){
-      struct auditory_info info = mesh_finalize(mesh_get_shm_ptr());
-      printInfo(&info);
-      return 0;
-    }
-  }
-  
+  struct auditory_info info = mesh_finalize(mesh_get_shm_ptr());
+  printInfo(&info);
   return 0;
 }
 
 int main()
 {
-  // wiringPiSetupGpio(); // initialize wiringPi
-  // pinMode(BUTTON_PIN, INPUT); // set button pin as input
-  // while (1) {
-  //   if (digitalRead(BUTTON_PIN) == HIGH) {
-  //     printf("Button pressed!\n");
-  //     delay(100); 
-  //     finalizer();
-  //     return 0;
-  //   }
-  // }
-  finalizer();
+  wiringPiSetupGpio(); // initialize wiringPi
+  pinMode(BUTTON_PIN, INPUT); // set button pin as input
+  while (1) {
+    if (digitalRead(BUTTON_PIN) == HIGH) {
+       printf("Button pressed!\n");
+       delay(100); 
+       finalizer();
+       return 0;
+     }
+  }
   return 0;
 }
 

@@ -6,7 +6,7 @@ PWD = $(shell pwd)
 INCLUDE_FLAGS = -I${PWD}/../ -I${PWD}/../mesh/include
 COMPILE_FLAGS = -Werror ${INCLUDE_FLAGS}
 MESH_LIB = -L${PWD}/../mesh -lmesh
-LINKER_FLAGS += -lrt ${MESH_LIB}
+LINKER_FLAGS += -lrt ${MESH_LIB} -lpthread -lwiringPi
 
 all: common main
 
