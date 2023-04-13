@@ -9,7 +9,7 @@ MESH_LIB = -L${PWD}/../mesh -lmesh -lpthread
 
 .PHONY: all
 
-all: emisor run
+all: emisor
 
 common:
 	${MAKE} -C ../mesh

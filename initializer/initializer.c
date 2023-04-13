@@ -21,7 +21,7 @@ void init_file(int input_size){
     char *filename = "output.txt";
     char buffer[input_size];
 
-     memset(buffer, ' ', input_size); // fill buffer with blank spaces
+     memset(buffer, 0, input_size); // fill buffer with blank spaces
 
     fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0644); // create and open file
 
@@ -39,6 +39,11 @@ void init_file(int input_size){
 int main(int argc, char *argv[]) {
     //TODO: Falta el identificador de espacio compartido
     printf("Inicializando el espacio compartido!\n");
+
+    if (argc != 2) {
+        printf("Error: Debe ingresar el tamaño del buffer como argumento\n");
+        return 1;
+    }
 
     int buffer_size = (int) atoi(argv[1]);
     char *file_name = "input.txt";

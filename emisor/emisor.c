@@ -89,7 +89,7 @@ char obtener_caracter(int index) {
     FILE *file;
     char c;
 
-    file = fopen("input.txt", "r");
+    file = fopen("../initializer/input.txt", "r");
     if (file == NULL) {
         printf("No se pudo abrir el archivo.\n");
         return 0;
@@ -124,8 +124,6 @@ void emisor(int mode, char key) {
         return;
     }
 
-    if(mode == 0) {
-
     int index_idx = mesh_get_file_idx(shm_ptr);
     int heartbeat = get_heartbeat(shm_ptr);
     while(heartbeat && index_idx != -1) {        
@@ -136,40 +134,34 @@ void emisor(int mode, char key) {
         print_caracter_emisor(caracter, encrypted_c, c);
         index_idx = mesh_get_file_idx(shm_ptr);
         heartbeat = get_heartbeat(shm_ptr);
-    }
-    // Finalize emitter
-    mesh_finalize_emitter(shm_ptr);
-
-    }
-    else {
-        //Adjust the condition. Needs to be cycled until there is a signal.
-        while(1){
-            while(1){
-                printf("Press Enter to execute the function.\n");
-                int key= getchar();
-                if(key==10){
-                    break;
-                } 
-            }
-            int index_idx = mesh_get_file_idx(shm_ptr);
-            int heartbeat = get_heartbeat(shm_ptr);
-            while(heartbeat && index_idx != -1) { 
-                char c = obtener_caracter(index_idx);
-                char encrypted_c = c ^ key;
-                struct shm_caracter caracter = create_caracter_emisor(encrypted_c, index_idx);
-                caracter = mesh_add_caracter(shm_ptr, caracter);
-                print_caracter_emisor(caracter, encrypted_c, c);
-                index_idx = mesh_get_file_idx(shm_ptr);
-                heartbeat = get_heartbeat(shm_ptr);
-            }
-            // Finalize emitter
-            mesh_finalize_emitter(shm_ptr);
+        while(mode == 1){
+            printf("Press Enter to continue.\n");
+            int key= getchar();
+            if(key==10){
+                break;
+            } 
         }
     }
 
+    if(get_heartbeat(shm_ptr)==0) {
+        mesh_finalize_emitter(shm_ptr);
+    } else {
+        mesh_natural_death_emitter(shm_ptr);
+    }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+
+    if (argc != 2) {
+        printf("Error: falta la key!\n");
+        return 1;
+    }
+
+    int key = atoi(argv[1]);
+    if (key > 255 || key < 0) {
+        printf("Error: key debe ser un entero entre 0 y 255!\n");
+        return 1;
+    }
 
     int modo_ejecucion;
     printf("+----------------------+\n");
@@ -182,6 +174,6 @@ int main() {
     modo_ejecucion = obtener_modo();
     
     chooseColor();
-    emisor(modo_ejecucion, 70);
+    emisor(modo_ejecucion, key);
     return 0;
 }
