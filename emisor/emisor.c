@@ -22,7 +22,7 @@ void print_caracter_emisor(struct shm_caracter character, char asciiValue, char 
 
 void chooseColor(){
     srand(time(NULL));
-    int receptorNum= rand() % 6;
+    int receptorNum= rand() % 11;
 
     switch(receptorNum){
         case 0:// Set console text color to red
@@ -31,6 +31,7 @@ void chooseColor(){
 
         case 1:// Set console text color to magenta
             printf("\033[35m");
+            break;
 
         case 2:// Set console text color to blue
             printf("\033[34m");
@@ -38,6 +39,7 @@ void chooseColor(){
 
         case 3:// Set console text color to yellow
             printf("\033[33m");
+            break;
 
         case 4:// Set console text color to green
             printf("\033[32m");
@@ -46,7 +48,41 @@ void chooseColor(){
         case 5:// Set console text color to cyan
             printf("\033[36m");
             break;
+
+        case 6:// Set console text color to light red
+            printf("\033[91m");
+            break;
+
+        case 7:// Set console text color to light blue
+            printf("\033[94m");
+            break;
+
+        case 8:// Set console text color to light yellow
+            printf("\033[93m");
+            break;
+
+        case 9:// Set console text color to light green
+            printf("\033[92m");
+            break;
+
+        case 10:// Set console text color to white
+            printf("\033[97m");
+            break;
     }
+}
+
+int obtener_modo() {
+    int modo_ejecucion;
+    while (1) {
+        printf("Ingrese modo de ejecución (0 o 1): ");
+        scanf("%d", &modo_ejecucion);
+        if (modo_ejecucion == 0 || modo_ejecucion == 1) {
+            break;
+        } else {
+            printf("Valor inválido. Por favor ingrese 0 o 1.\n");
+        }
+    }
+    return modo_ejecucion;
 }
 
 char obtener_caracter(int index) {
@@ -72,7 +108,7 @@ struct shm_caracter create_caracter_emisor(int valor, int index) {
     caracter.value = valor;
     caracter.file_idx = index;
     caracter.datetime = *localtime(&current_time);
-    //sleep(1);
+    sleep(1);
     return caracter;
 }
 
@@ -134,7 +170,18 @@ void emisor(int mode, char key) {
 }
 
 int main() {
+
+    int modo_ejecucion;
+    printf("+----------------------+\n");
+    printf("| Modo de Ejecución    |\n");
+    printf("+----------------------+\n");
+    printf("| 0      | Automático  |\n");
+    printf("| 1      | Manual      |\n");
+    printf("+--------+-------------+\n");
+    printf("Ingrese modo de ejecución (0 o 1): ");
+    modo_ejecucion = obtener_modo();
+    
     chooseColor();
-    emisor(1, 70);
+    emisor(modo_ejecucion, 70);
     return 0;
 }

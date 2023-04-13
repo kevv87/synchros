@@ -8,6 +8,20 @@
 #include <string.h>
 
 
+int obtener_modo() {
+    int modo_ejecucion;
+    while (1) {
+        printf("Ingrese modo de ejecución (0 o 1): ");
+        scanf("%d", &modo_ejecucion);
+        if (modo_ejecucion == 0 || modo_ejecucion == 1) {
+            break;
+        } else {
+            printf("Valor inválido. Por favor ingrese 0 o 1.\n");
+        }
+    }
+    return modo_ejecucion;
+}
+
 
 struct shm_caracter Create_caracter(int dir){
     struct shm_caracter caracter;
@@ -198,8 +212,19 @@ void receptor(int mode,  int key){
 }
 
 int main(){
+
+    int modo_ejecucion;
+    printf("+----------------------+\n");
+    printf("| Modo de Ejecución    |\n");
+    printf("+----------------------+\n");
+    printf("| 0      | Automático  |\n");
+    printf("| 1      | Manual      |\n");
+    printf("+--------+-------------+\n");
+    printf("Ingrese modo de ejecución (0 o 1): ");
+    modo_ejecucion = obtener_modo();
+
     chooseColor();
-    receptor(1, 70);
+    receptor(modo_ejecucion, 70);
 
     return 0;
 }
