@@ -14,7 +14,7 @@
 #include "../common/structures.c"
 #include "../common/debugging.c"
 
-#define TEST_FILE_LENGTH 9
+#define TEST_FILE_LENGTH 20
 
 typedef struct thread_list_node {
     pthread_t *thread_id;
@@ -278,6 +278,7 @@ sem_t *mesh_get_buffer_idx_semaphore(void *shm_ptr) {
 }
 
 sem_t *mesh_get_file_idx_semaphore(void *shm_ptr) {
+    struct shm_context *context = get_shm_context(shm_ptr);
     struct mesh_semaphores *semaphores = mesh_get_all_semaphores(shm_ptr);
     return &(semaphores->file_idx_sem);
 }
@@ -305,6 +306,9 @@ int get_buffer_idx(void *shm_ptr) {
 }
 
 int mesh_get_file_idx(void *shm_ptr) {
+    if (!get_heartbeat(shm_ptr)) {
+        return -1;
+    }
     struct shm_context *context = get_shm_context(shm_ptr);
     sem_t *file_idx_sem = mesh_get_file_idx_semaphore(shm_ptr);
 
@@ -346,6 +350,10 @@ void *increment_characters_in_buffer(void *shm_ptr) {
 }
 
 struct shm_caracter mesh_add_caracter(void *shm_ptr, struct shm_caracter caracter) {
+    struct shm_context *context = get_shm_context(shm_ptr);
+    if (!get_heartbeat(shm_ptr)){
+        return (struct shm_caracter){};
+    }
     struct shm_caracter *buffer = get_buffer(shm_ptr);
     sem_t *emitter_sem = mesh_get_emitter_semaphore(shm_ptr);
     sem_t *receptor_sem = mesh_get_receptor_semaphore(shm_ptr);
@@ -433,11 +441,43 @@ void mesh_finalize_receptor(void *shm_ptr) {
     wait_all_threads();
 }
 
+void destroy_semaphore(sem_t *semaphore, int process_quantity) {
+    for (int i = 0; i < process_quantity; i++) {
+        sem_post(semaphore);
+    }
+    sem_destroy(semaphore);
+}
+
+void destroy_all_semaphores(void *shm_ptr) {
+    struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
+    int total_processes = auditory_info->total_emitters + auditory_info->total_receptors;
+
+    sem_t **semaphores = malloc(sizeof(sem_t *) * 12);
+    semaphores[0] = mesh_get_emitter_semaphore(shm_ptr);
+    semaphores[1] = mesh_get_receptor_semaphore(shm_ptr);
+    semaphores[2] = mesh_get_buffer_idx_semaphore(shm_ptr);
+    semaphores[3] = mesh_get_file_idx_semaphore(shm_ptr);
+    semaphores[4] = mesh_get_output_file_idx_semaphore(shm_ptr);
+    semaphores[5] = mesh_get_read_buffer_idx_semaphore(shm_ptr);
+    semaphores[6] = &auditory_info->alive_emitters_semaphore;
+    semaphores[7] = &auditory_info->total_emitters_semaphore;
+    semaphores[8] = &auditory_info->alive_receptors_semaphore;
+    semaphores[9] = &auditory_info->total_receptors_semaphore;
+    semaphores[10] = &auditory_info->transferred_characters_semaphore;
+    semaphores[11] = &auditory_info->characters_in_buffer_semaphore;
+
+    for (int i = 0; i < total_processes; i++) {
+        destroy_semaphore(semaphores[i], total_processes);
+    }
+
+}
+
 struct auditory_info mesh_finalize(void *shm_ptr) {
     struct shm_context *context = get_shm_context(shm_ptr);
     struct auditory_info *auditory_info = get_auditory_info(shm_ptr);
 
     context->heartbeat = 0;
+    destroy_all_semaphores(shm_ptr);
     while(auditory_info->alive_emitters > 0 || auditory_info->alive_receptors > 0) {
         printf("Someone is still alive...\n");
         printf("Alive emitters: %d\n", auditory_info->alive_emitters);

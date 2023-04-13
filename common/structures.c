@@ -46,31 +46,4 @@ struct shm_caracter {
     int file_idx;
 };
 
-struct transferred_characters{
-    int value;
-    sem_t semaphore;
-};
-
-struct characters_in_buffer {
-    int value;
-    sem_t semaphore;
-};
-
-struct emisor_info {
-    int alive;
-    int total;
-    sem_t semaphore;
-};
-
-struct receptor_info {
-    int alive;
-    int total;
-    sem_t semaphore;
-};
-
-struct shm_mem_used {
-    int value;
-    sem_t semaphore;
-};
-
 #endif
