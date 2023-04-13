@@ -65,16 +65,17 @@ int finalizer() {
 
 int main()
 {
-  wiringPiSetupGpio(); // initialize wiringPi
-  pinMode(BUTTON_PIN, INPUT); // set button pin as input
-  while (1) {
-    if (digitalRead(BUTTON_PIN) == HIGH) {
-      printf("Button pressed!\n");
-      delay(100); 
-      finalizer();
-      return 0;
-    }
-  }
+  // wiringPiSetupGpio(); // initialize wiringPi
+  // pinMode(BUTTON_PIN, INPUT); // set button pin as input
+  // while (1) {
+  //   if (digitalRead(BUTTON_PIN) == HIGH) {
+  //     printf("Button pressed!\n");
+  //     delay(100); 
+  //     finalizer();
+  //     return 0;
+  //   }
+  // }
+  finalizer();
   return 0;
 }
 
