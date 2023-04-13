@@ -1,5 +1,5 @@
 CFLAGS = -I../../mesh/include -I../../ 
-LDFLAGS = -L../../mesh/ -lmesh
+LDFLAGS = -L../../mesh/ -lmesh -lpthread
 
 initializer: test_aux_initializer.c
 	$(CC) $(CFLAGS) -o test_aux_initializer.o test_aux_initializer.c $(LDFLAGS)

@@ -4,7 +4,7 @@ $AR = ar
 $PWD = $(shell pwd)
 
 all: mesh compile_static
-LINKER_FLAGS += -lrt
+LINKER_FLAGS += -lrt -lpthread
 COMPILER_FLAGS += -Werror -I./include -I../
 MESH_LIB = -I./include -L./ -lmesh
 
